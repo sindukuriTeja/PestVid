@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -256,7 +255,7 @@
                         <a href="#" @click.prevent="switchPage('farmerAgriStream')" :class="{'font-bold text-green-700': current==='farmerAgriStream'}" class="hover:text-green-600">AgriStream</a>
                         <a href="#" @click.prevent="switchPage('farmerSell')" :class="{'font-bold text-green-700': current==='farmerSell'}" class="hover:text-green-600">Sell</a>
                         <a href="#" @click.prevent="switchPage('farmerFunding')" :class="{'font-bold text-green-700': current==='farmerFunding'}" class="hover:text-green-600">Get Funding</a>
-                        <a href="#" @click.prevent="switchPage('plantRecommendation')" :class="{'font-bold text-green-700': current==='plantRecommendation'}" class="hover:text-green-600">PlantRecommend</a>
+                        <a href="#" @click.prevent="switchPage('plantAnalysis')" :class="{'font-bold text-green-700': current==='plantAnalysis'}" class="hover:text-green-600">Plant Analysis</a>
                         <a href="#" @click.prevent="switchPage('farmerChatbot')" :class="{'font-bold text-green-700': current==='farmerChatbot'}" class="hover:text-green-600"><i class="fas fa-robot mr-1"></i>AgriBot</a>
                     </template>
                     <!-- Buyer Menu -->
@@ -294,7 +293,7 @@
                         <a href="#" @click.prevent="switchPage('farmerAgriStream');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerAgriStream'}">AgriStream</a>
                         <a href="#" @click.prevent="switchPage('farmerSell');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerSell'}">Sell</a>
                         <a href="#" @click.prevent="switchPage('farmerFunding');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerFunding'}">Get Funding</a>
-                        <a href="#" @click.prevent="switchPage('plantRecommendation');showMobileMenu=false" :class="{'font-bold text-green-700': current==='plantRecommendation'}">PlantRecommend</a>
+                        <a href="#" @click.prevent="switchPage('plantAnalysis');showMobileMenu=false" :class="{'font-bold text-green-700': current==='plantAnalysis'}">Plant Analysis</a>
                         <a href="#" @click.prevent="switchPage('farmerChatbot');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerChatbot'}"><i class="fas fa-robot mr-1"></i>AgriBot</a>
                     </template>
                     <!-- Buyer Menu -->
@@ -321,7 +320,7 @@
 
         <!-- Main Content (Shown if authenticated) -->
         <main class="flex-1 max-w-7xl mx-auto w-full px-4 pt-8 pb-8">
-            <!-- Main Content Sections (Conditional on current page) -->
+            <!-- This div wraps all conditional page sections -->
             <div>
                 <!-- Landing Section -->
                 <section v-if="current==='landing'">
@@ -571,13 +570,13 @@
                         <div v-if="farmerFundingRequests.length===0" class="text-gray-600 text-sm bg-gray-50 p-4 rounded text-center">You have no active funding requests.</div>
                         <div v-else class="space-y-4">
                             <div v-for="req in farmerFundingRequests" :key="req._id" class="border rounded-lg overflow-hidden shadow-sm bg-white">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-gray-50 border-b"> <h4 class="font-bold mb-2 sm:mb-0">{{ req.title }}</h4> <div class="flex items-center space-x-2"> <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium"> {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }} </span> </div> </div>
-                            <div class="p-4">
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm"> <div> <div class="text-xs text-gray-500">Crop</div> <div>{{ req.crop }}</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div>{{ req.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Required</div> <div>{{ req.amount }} SOL</div> </div> <div> <div class="text-xs text-gray-500">Investor Share</div> <div>{{ req.investorShare }}%</div> </div> </div>
-                                <div class="mb-4"> <div class="text-xs text-gray-500 mb-1">Funding Progress</div> <div class="progress-bar"> <div class="progress-fill bg-green-500" :style="{width: fundingProgressPercent(req) + '%'}"></div> </div> <div class="flex justify-between text-xs mt-1"> <span>{{ req.fundedAmount || 0 }} SOL raised</span> <span>{{ fundingProgressPercent(req) }}% Complete</span> </div> </div>
-                                <div v-if="req.fundedAmount > 0 && req.investors && req.investors.length > 0" class="mb-4"> <div class="text-xs text-gray-500 mb-2">Investors ({{req.investors.length}})</div> <div class="text-sm max-h-24 overflow-y-auto border rounded p-2 bg-gray-50 space-y-1"> <div v-for="investor in req.investors" :key="investor.investorId || investor._id" class="flex justify-between items-center py-1 text-xs"> <span><i class="fas fa-user text-gray-400 mr-1"></i>{{ getFarmerDisplayIdentifier(investor.investorId, 6) }}</span> <span class="font-mono bg-blue-100 text-blue-800 px-1 rounded">{{ investor.amount }} SOL</span> </div> </div> </div>
-                                <div class="flex justify-end mt-4"> <button v-if="req.status !== 'funded'" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" @click="cancelFundingRequest_V1(req._id)"> <i class="fas fa-times mr-1"></i>Cancel Request </button> <span v-if="req.status === 'funded'" class="text-xs text-green-600"><i class="fas fa-check-circle mr-1"></i>Fully Funded!</span> </div>
-                            </div>
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-gray-50 border-b"> <h4 class="font-bold mb-2 sm:mb-0">{{ req.title }}</h4> <div class="flex items-center space-x-2"> <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium"> {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }} </span> </div> </div>
+                                <div class="p-4">
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm"> <div> <div class="text-xs text-gray-500">Crop</div> <div>{{ req.crop }}</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div>{{ req.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Required</div> <div>{{ req.amount }} SOL</div> </div> <div> <div class="text-xs text-gray-500">Investor Share</div> <div>{{ req.investorShare }}%</div> </div> </div>
+                                    <div class="mb-4"> <div class="text-xs text-gray-500 mb-1">Funding Progress</div> <div class="progress-bar"> <div class="progress-fill bg-green-500" :style="{width: fundingProgressPercent(req) + '%'}"></div> </div> <div class="flex justify-between text-xs mt-1"> <span>{{ req.fundedAmount || 0 }} SOL raised</span> <span>{{ fundingProgressPercent(req) }}% Complete</span> </div> </div>
+                                    <div v-if="req.fundedAmount > 0 && req.investors && req.investors.length > 0" class="mb-4"> <div class="text-xs text-gray-500 mb-2">Investors ({{req.investors.length}})</div> <div class="text-sm max-h-24 overflow-y-auto border rounded p-2 bg-gray-50 space-y-1"> <div v-for="investor in req.investors" :key="investor.investorId || investor._id" class="flex justify-between items-center py-1 text-xs"> <span><i class="fas fa-user text-gray-400 mr-1"></i>{{ getFarmerDisplayIdentifier(investor.investorId, 6) }}</span> <span class="font-mono bg-blue-100 text-blue-800 px-1 rounded">{{ investor.amount }} SOL</span> </div> </div> </div>
+                                    <div class="flex justify-end mt-4"> <button v-if="req.status !== 'funded'" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" @click="cancelFundingRequest_V1(req._id)"> <i class="fas fa-times mr-1"></i>Cancel Request </button> <span v-if="req.status === 'funded'" class="text-xs text-green-600"><i class="fas fa-check-circle mr-1"></i>Fully Funded!</span> </div>
+                                </div>
                             </div>
                         </div>
                         </div>
@@ -590,44 +589,44 @@
                         <p class="font-bold">User: {{ currentUser ? currentUser.name : 'Buyer' }} (Role: Buyer)</p>
                         <p class="text-sm">Browse listings from farmers and simulate purchases.</p>
                     </div>
-                <div class="bg-white rounded shadow-md p-6 mb-7">
-                    <div class="flex flex-col md:flex-row md:items-end gap-5">
-                    <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="buyerFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All</option> <option v-for="c in uniqueCrops" :key="c">{{c}}</option> </select> </div>
-                    <div class="flex-1"> <label class="text-gray-600 text-sm">Location</label> <input v-model="buyerFilters.location" class="w-full px-2 py-1 border rounded text-sm" placeholder="Search by location..."> </div>
-                    <div class="flex-1"> <label class="text-gray-600 text-sm">Pesticide Co.</label> <input v-model="buyerFilters.pesticideCompany" class="w-full px-2 py-1 border rounded text-sm" placeholder="Search by pesticide company..."> </div>
-                    <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1 rounded text-sm mt-2 md:mt-0" @click="resetBuyerFilters"> <i class="fas fa-undo mr-1"></i> Reset Filters </button>
+                    <div class="bg-white rounded shadow-md p-6 mb-7">
+                        <div class="flex flex-col md:flex-row md:items-end gap-5">
+                        <div class="w-full md:w-48"> <label class="text-gray-600 text-sm">Crop Type</label> <select v-model="buyerFilters.crop" class="w-full px-2 py-1 border rounded bg-white text-sm"> <option value="">All</option> <option v-for="c in uniqueCrops" :key="c">{{c}}</option> </select> </div>
+                        <div class="flex-1"> <label class="text-gray-600 text-sm">Location</label> <input v-model="buyerFilters.location" class="w-full px-2 py-1 border rounded text-sm" placeholder="Search by location..."> </div>
+                        <div class="flex-1"> <label class="text-gray-600 text-sm">Pesticide Co.</label> <input v-model="buyerFilters.pesticideCompany" class="w-full px-2 py-1 border rounded text-sm" placeholder="Search by pesticide company..."> </div>
+                        <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1 rounded text-sm mt-2 md:mt-0" @click="resetBuyerFilters"> <i class="fas fa-undo mr-1"></i> Reset Filters </button>
+                        </div>
                     </div>
-                </div>
-                <div v-if="filteredListings.length === 0" class="text-gray-600 bg-gray-50 p-8 text-center rounded"> <i class="fas fa-search text-4xl text-gray-400 mb-3"></i><br> No listings found matching your criteria. Try adjusting your filters. </div>
-                <div v-else class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    <div v-for="l in filteredListings" :key="l._id" class="bg-white rounded shadow p-4 flex flex-col relative">
-                        <div v-if="l.isNew" class="new-badge">NEW</div>
-                    <div class="mb-3 flex justify-center">
-                        <video :src="getVideoUrl(l.cid, l.storageType || 'ipfs')"
-                               controls
-                               playsinline
-                               webkit-playsinline
-                               crossorigin="anonymous"
-                               preload="metadata"
-                               class="rounded w-full max-h-52 bg-black object-cover"
-                               @error="handleVideoError"
-                               @loadstart="handleVideoLoadStart"
-                               @canplay="handleVideoCanPlay">
-                            <source :src="getVideoUrl(l.cid, l.storageType || 'ipfs')" type="video/mp4">
-                            <source :src="getVideoUrl(l.cid, l.storageType || 'ipfs')" type="video/webm">
-                            <!-- Fallback message removed - handled by error handler -->
-                        </video>
+                    <div v-if="filteredListings.length === 0" class="text-gray-600 bg-gray-50 p-8 text-center rounded"> <i class="fas fa-search text-4xl text-gray-400 mb-3"></i><br> No listings found matching your criteria. Try adjusting your filters. </div>
+                    <div v-else class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        <div v-for="l in filteredListings" :key="l._id" class="bg-white rounded shadow p-4 flex flex-col relative">
+                            <div v-if="l.isNew" class="new-badge">NEW</div>
+                        <div class="mb-3 flex justify-center">
+                            <video :src="getVideoUrl(l.cid, l.storageType || 'ipfs')"
+                                   controls
+                                   playsinline
+                                   webkit-playsinline
+                                   crossorigin="anonymous"
+                                   preload="metadata"
+                                   class="rounded w-full max-h-52 bg-black object-cover"
+                                   @error="handleVideoError"
+                                   @loadstart="handleVideoLoadStart"
+                                   @canplay="handleVideoCanPlay">
+                                <source :src="getVideoUrl(l.cid, l.storageType || 'ipfs')" type="video/mp4">
+                                <source :src="getVideoUrl(l.cid, l.storageType || 'ipfs')" type="video/webm">
+                                <!-- Fallback message removed - handled by error handler -->
+                            </video>
+                        </div>
+                        <div class="mb-1 font-bold text-lg">{{ l.crop }}</div>
+                        <div class="text-xs text-gray-500 mb-1">Location: <span class="font-mono">{{ l.location }}</span></div>
+                        <div class="text-xs text-gray-500 mb-1">Pesticide: <span class="font-mono">{{ l.pesticide }}</span></div>
+                        <div class="text-xs text-gray-500 mb-2">Pesticide Co.: <span class="font-mono">{{ l.pesticideCompany || 'N/A' }}</span></div>
+                        <div class="text-sm my-2">Price Range: <br><span class="font-mono text-base font-semibold">{{ l.minPrice }}</span> - <span class="font-mono text-base font-semibold">{{ l.maxPrice }}</span> SOL</div>
+                        <div class="flex items-center text-xs text-gray-600 mb-2"> <span class="mr-1">Sold by: {{ getSellerDisplayIdentifier(l.farmerWallet) }}</span> <button @click="showFarmerProfile(l.farmerWallet)" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div>
+                        <button class="mt-auto bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm" @click="buyListing(l)" :disabled="role !== 'buyer' || currentUserIdentifier === l.farmerWallet"> <i class="fas fa-shopping-cart mr-1"></i> {{ currentUserIdentifier === l.farmerWallet ? 'Your Listing' : (role === 'buyer' ? 'Initiate Purchase' : 'Switch to Buyer Role') }} </button>
+                        <button @click="startOrGoToConversation(l.farmerWallet)" v-if="currentUserIdentifier !== l.farmerWallet" class="mt-2 text-xs text-blue-600 hover:text-blue-700 border border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 flex items-center justify-center"> <i class="fas fa-envelope mr-1"></i> Message Seller </button>
+                        </div>
                     </div>
-                    <div class="mb-1 font-bold text-lg">{{ l.crop }}</div>
-                    <div class="text-xs text-gray-500 mb-1">Location: <span class="font-mono">{{ l.location }}</span></div>
-                    <div class="text-xs text-gray-500 mb-1">Pesticide: <span class="font-mono">{{ l.pesticide }}</span></div>
-                    <div class="text-xs text-gray-500 mb-2">Pesticide Co.: <span class="font-mono">{{ l.pesticideCompany || 'N/A' }}</span></div>
-                    <div class="text-sm my-2">Price Range: <br><span class="font-mono text-base font-semibold">{{ l.minPrice }}</span> - <span class="font-mono text-base font-semibold">{{ l.maxPrice }}</span> SOL</div>
-                    <div class="flex items-center text-xs text-gray-600 mb-2"> <span class="mr-1">Sold by: {{ getSellerDisplayIdentifier(l.farmerWallet) }}</span> <button @click="showFarmerProfile(l.farmerWallet)" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> </div>
-                    <button class="mt-auto bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm" @click="buyListing(l)" :disabled="role !== 'buyer' || currentUserIdentifier === l.farmerWallet"> <i class="fas fa-shopping-cart mr-1"></i> {{ currentUserIdentifier === l.farmerWallet ? 'Your Listing' : (role === 'buyer' ? 'Initiate Purchase' : 'Switch to Buyer Role') }} </button>
-                    <button @click="startOrGoToConversation(l.farmerWallet)" v-if="currentUserIdentifier !== l.farmerWallet" class="mt-2 text-xs text-blue-600 hover:text-blue-700 border border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 flex items-center justify-center"> <i class="fas fa-envelope mr-1"></i> Message Seller </button>
-                    </div>
-                </div>
                 </section>
                 <!-- Investor Projects Section -->
                 <section v-if="current==='investorProjects'" class="max-w-6xl mx-auto mt-6">
@@ -798,47 +797,79 @@
                     </div>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-green-700 to-green-500 p-6 text-white">
-                    <div class="flex flex-col md:flex-row justify-between items-center">
-                        <div class="flex items-center mb-4 md:mb-0">
-                        <div class="bg-white rounded-full w-16 h-16 flex items-center justify-center mr-4 text-green-600 shadow overflow-hidden">
-                            <i :class="role === 'farmer' ? 'fas fa-tractor' : (role === 'buyer' ? 'fas fa-shopping-cart' : 'fas fa-chart-line')" class="text-3xl"></i>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-700 text-3xl shadow">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold">{{ userName }}</h2>
+                                <p class="text-green-200">{{ userRoleDisplay }}</p>
+                            </div>
                         </div>
-                        <div> <h2 class="text-2xl font-bold">{{ userNameDisplay }}</h2> <p class="text-green-100 capitalize"> {{ role === 'farmer' ? 'Agricultural Producer' : role === 'buyer' ? 'Crop Buyer' : 'Agricultural Investor' }} </p> </div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2 flex items-center text-sm"> <i class="fas fa-certificate mr-2"></i> <span>{{ role === 'farmer' ? 'Verified Farmer' : role === 'buyer' ? 'Verified Buyer' : 'Verified Investor' }} (PestiVid Status)</span> </div>
-                    </div>
                     </div>
                     <div class="p-6">
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-id-card mr-2"></i>Account Information </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        <div>
-                            <div class="mb-4"> <p class="text-gray-600">Full Name (PestiVid)</p> <p class="font-medium">{{ userNameDisplay }}</p> </div>
-                            <div> <p class="text-gray-600">PestiVid Account Type</p> <p class="font-medium capitalize">{{ role || "Not Set" }}</p> </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <p class="text-xs text-gray-500">Full Name</p>
+                                <p class="text-gray-800">{{ userName }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Email Address</p>
+                                <p class="text-gray-800">{{ userEmailDisplay }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Phone Number</p>
+                                <p class="text-gray-800">{{ userPhoneDisplay }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">PestiVid Member Since</p>
+                                <p class="text-gray-800">{{ memberSinceDisplay }}</p>
+                            </div>
+                             <div>
+                                <p class="text-xs text-gray-500">PestiVid Identifier (Wallet)</p>
+                                <p class="text-gray-800 font-mono text-sm">{{ currentUserIdentifier }}</p>
+                            </div>
                         </div>
-                        <div>
-                            <div class="mb-4"> <p class="text-gray-600">Email (PestiVid)</p> <p class="font-medium">{{ userEmailDisplay }}</p> </div>
-                            <div class="mb-4"> <p class="text-gray-600">Phone (PestiVid)</p> <p class="font-medium">{{ userPhoneDisplay }}</p> </div>
-                            <div> <p class="text-gray-600">PestiVid Member Since</p> <p class="font-medium">{{ memberSinceDisplay }}</p> </div>
+                        <div class="border-t pt-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Platform Activity Overview</h3>
+                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div v-if="role==='farmer'" class="bg-green-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-green-700">{{ farmerVideos.length }}</p>
+                                    <p class="text-sm text-gray-600">Videos Uploaded</p>
+                                </div>
+                                <div v-if="role==='farmer'" class="bg-blue-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-blue-700">{{ farmerListings.filter(l=>l.status === 'active').length }}</p>
+                                    <p class="text-sm text-gray-600">Active Listings</p>
+                                </div>
+                                <div v-if="role==='farmer'" class="bg-purple-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-purple-700">{{ farmerFundingRequests.filter(r=>['pending', 'partially_funded'].includes(r.status)).length }}</p>
+                                    <p class="text-sm text-gray-600">Funding Requests</p>
+                                </div>
+                                 <div v-if="role==='farmer'" class="bg-yellow-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-yellow-700">{{ farmerSales.length }}</p>
+                                    <p class="text-sm text-gray-600">Sales Made</p>
+                                </div>
+                                <div v-if="role==='buyer'" class="bg-indigo-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-indigo-700">{{ buyerPurchases.length }}</p>
+                                    <p class="text-sm text-gray-600">Purchases Made</p>
+                                </div>
+                                <div v-if="role==='investor'" class="bg-teal-50 p-4 rounded-lg">
+                                    <p class="text-2xl font-bold text-teal-700">{{ investorInvestments.length }}</p>
+                                    <p class="text-sm text-gray-600">Investments Made</p>
+                                </div>
+                                <div class="bg-gray-100 p-4 rounded-lg col-span-2 md:col-span-1">
+                                    <p class="text-2xl font-bold text-gray-700">{{ unreadMessageCount }}</p>
+                                    <p class="text-sm text-gray-600">Unread Messages</p>
+                                </div>
+                            </div>
                         </div>
+                         <div class="mt-6 text-center">
+                            <button @click="addNotification('Profile editing not yet implemented.', 'info')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded text-sm">
+                                <i class="fas fa-edit mr-1"></i> Edit Profile (Coming Soon)
+                            </button>
                         </div>
                     </div>
-
-                    <div v-if="role === 'farmer'" class="mb-8">
-                        <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-map-marker-alt mr-2"></i>Farm Information </h3>
-                        <p class="text-sm text-gray-600">General farm information can be displayed here (e.g., location, size, certifications if any). This section is a placeholder for the demo farmer.</p>
-                    </div>
-
-                    <div v-if="role === 'farmer'">
-                            <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-video mr-2"></i>Your Uploaded Videos ({{ farmerVideos.length }}) </h3> <div v-if="farmerVideos.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-film text-gray-400 text-2xl mb-2"></i> <p>You haven't uploaded any videos yet.</p> <button @click="switchPage('farmerPestiVid')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Upload your first video</button> </div> <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> <div v-for="vid in farmerVideos" :key="vid.cid" class="bg-gray-50 rounded-lg p-4 shadow-sm"> <video :src="getVideoUrl(vid.cid, vid.storageType)" controls playsinline webkit-playsinline class="w-full h-40 object-cover bg-black rounded mb-3"></video> <h4 class="font-bold">{{ vid.crop }}</h4> <div class="text-xs mb-1" :class="{ 'text-blue-700': vid.purpose === 'sell', 'text-purple-700': vid.purpose === 'funding', 'text-gray-600': vid.purpose === 'agristream' || !vid.purpose }"> Purpose: <span class="font-semibold"> {{ vid.purpose === 'sell' ? 'Sale' : (vid.purpose === 'funding' ? 'Funding' : (vid.purpose === 'agristream' ? 'General' : 'N/A')) }} </span> </div> <div class="text-sm mb-1">Location: {{ vid.location }}</div> <div class="text-sm mb-1">Pesticide: {{ vid.pesticide }}</div> <div class="text-sm mb-2">Pesticide Co.: {{ vid.pesticideCompany || 'N/A' }}</div> <div class="flex justify-between items-center mt-2 text-xs text-gray-500"> <span class="font-mono truncate" :title="vid.cid">CID: {{ vid.cid.substring(0, 10) }}...</span> <a :href="getVideoUrl(vid.cid, vid.storageType)" target="_blank" class="text-blue-600 hover:underline">View</a> </div> <div class="text-xs text-gray-400 mt-1">File Hash: <span class="font-mono break-all" :title="vid.videoFileHash || 'N/A'">{{ vid.videoFileHash ? vid.videoFileHash.substring(0,10) + '...' : 'N/A' }}</span></div> </div> </div> </div>
-                            <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-tags mr-2"></i>Your Active Listings ({{ farmerListings.length }}) </h3> <div v-if="farmerListings.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-store text-gray-400 text-2xl mb-2"></i> <p>You don't have any active listings.</p> <button @click="switchPage('farmerSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Create your first listing</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="listing in farmerListings" :key="listing._id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ listing.crop }}</div> <div class="text-xs text-gray-500" :title="listing.cid">CID: {{ listing.cid.substring(0, 8) }}... ({{listing.storageType || 'ipfs'}})</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ listing.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm text-gray-900 font-mono">{{ listing.minPrice }} - {{ listing.maxPrice }}</div> </td> <td class="px-6 py-4 whitespace-nowrap"> <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"> Active </span> </td> </tr> </tbody> </table> </div> </div> </div>
-                            <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-dollar-sign mr-2"></i>Your Sales History ({{ farmerSales.length }}) </h3> <div v-if="farmerSales.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-receipt text-gray-400 text-2xl mb-2"></i> <p>You haven't made any sales yet.</p> <button @click="switchPage('farmerSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Create your first listing</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Buyer</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Sold (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video/Tx</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="sale in farmerSales" :key="sale._id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ sale.crop }}</div> <div class="text-xs text-gray-500">{{ sale.location }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ sale.buyerName || 'Unknown Buyer' }} <button @click="showBuyerProfile(sale.buyerWallet)" v-if="sale.buyerWallet" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Buyer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(sale.buyerWallet)" v-if="sale.buyerWallet && currentUserIdentifier !== sale.buyerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Buyer"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono"> {{ sale.price }} SOL </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ formatTimestamp(sale.purchaseDate, true) }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewSaleVideo(sale)" class="hover:underline mr-2">Video</a> <a :href="solanaExplorerUrl(sale.txHash)" target="_blank" class="hover:underline" title="View Transaction">Tx</a> </td> </tr> </tbody> </table> </div> </div> </div>
-                            <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-hand-holding-usd mr-2"></i>Your Funding Requests ({{ farmerFundingRequests.length }}) </h3> <div v-if="farmerFundingRequests.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-money-bill-wave text-gray-400 text-2xl mb-2"></i> <p>You haven't created any funding requests yet.</p> <button @click="switchPage('farmerFunding')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Request funding for your farm</button> </div> <div v-else class="space-y-4"> <div v-for="req in farmerFundingRequests" :key="req._id" class="border rounded-lg overflow-hidden bg-white shadow-sm"> <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-50 border-b"> <h4 class="font-bold mb-1 sm:mb-0">{{ req.title }}</h4> <span :class="{'bg-yellow-100 text-yellow-800': req.status === 'pending', 'bg-green-100 text-green-800': req.status === 'funded', 'bg-blue-100 text-blue-800': req.status === 'partially_funded'}" class="px-2 py-1 rounded text-xs font-medium"> {{ req.status === 'pending' ? 'Pending' : req.status === 'funded' ? 'Fully Funded' : (req.status === 'partially_funded' ? 'Partially Funded' : req.status) }} </span> </div> <div class="p-4 text-sm"> <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"> <div> <div class="text-xs text-gray-500">Crop</div> <div>{{ req.crop }}</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div>{{ req.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Required</div> <div class="font-mono">{{ req.amount }} SOL</div> </div> <div> <div class="text-xs text-gray-500">Raised</div> <div class="font-mono">{{ req.fundedAmount || 0 }} SOL</div> </div> </div> <div class="mb-4"> <div class="text-xs text-gray-500 mb-1">Funding Progress</div> <div class="progress-bar"> <div class="progress-fill bg-green-500" :style="{width: fundingProgressPercent(req) + '%'}"></div> </div> <div class="text-xs mt-1">{{ fundingProgressPercent(req) }}% Complete</div> </div> <div class="flex justify-end mt-4"> <button v-if="req.status !== 'funded'" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" @click="cancelFundingRequest_V1(req._id)"> <i class="fas fa-times mr-1"></i>Cancel Request </button> <span v-if="req.status === 'funded'" class="text-xs text-green-600"><i class="fas fa-check-circle mr-1"></i>Fully Funded!</span> </div> </div> </div> </div> </div>
-                        </div>
-                    <div v-if="role === 'buyer'"> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-shopping-basket mr-2"></i>Your Purchase History ({{ buyerPurchases.length }}) </h3> <div v-if="buyerPurchases.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-shopping-cart text-gray-400 text-2xl mb-2"></i> <p>You haven't made any purchases yet.</p> <button @click="switchPage('buyerAgriSell')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse marketplace</button> </div> <div v-else> <div class="overflow-x-auto"> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pesticide Co.</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Paid (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video/Tx</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="purchase in buyerPurchases" :key="purchase._id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ purchase.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.location }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ purchase.pesticideCompany || 'N/A' }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono"> {{ purchase.price }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ formatTimestamp(purchase.purchaseDate, true) }} </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ getSellerDisplayIdentifier(purchase.farmerWallet, 10) }} <button @click="showFarmerProfile(purchase.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(purchase.farmerWallet)" v-if="currentUserIdentifier !== purchase.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Seller"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewPurchaseVideo(purchase)" class="hover:underline mr-2">Video ({{purchase.videoStorageType || 'ipfs'}})</a> <a :href="solanaExplorerUrl(purchase.txHash)" target="_blank" class="hover:underline" title="View Transaction (Demo Link)">Tx</a> </td> </tr> </tbody> </table> </div> </div> </div> </div>
-                    <div v-if="role === 'investor'"> <div class="mb-8"> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-chart-pie mr-2"></i>Investment Portfolio Summary </h3> <div v-if="investorInvestments.length === 0" class="bg-gray-100 rounded p-4 text-gray-600 text-center"> <i class="fas fa-coins text-gray-400 text-2xl mb-2"></i> <p>You haven't made any investments yet.</p> <button @click="switchPage('investorProjects')" class="text-green-600 hover:text-green-700 underline mt-2 text-sm">Browse investment opportunities</button> </div> <div v-else> <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Total Invested</div> <div class="text-xl font-bold text-green-700">{{ totalInvestedAmount }} SOL</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Projects</div> <div class="text-xl font-bold">{{ investorInvestments.length }}</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Avg. ROI</div> <div class="text-xl font-bold text-green-700">{{ investorAvgRoi }}%</div> </div> <div class="bg-gray-50 p-4 rounded-lg"> <div class="text-sm text-gray-500">Completed</div> <div class="text-xl font-bold">{{ investorCompletedProjects }}</div> </div> </div> <div class="overflow-x-auto mt-4"> <h4 class="text-lg font-semibold text-gray-800 mb-3">Your Investments</h4> <table class="min-w-full border divide-y divide-gray-200"> <thead class="bg-gray-50"> <tr> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (SOL)</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th> </tr> </thead> <tbody class="bg-white divide-y divide-gray-200"> <tr v-for="inv in investorInvestments" :key="inv._id"> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-medium text-gray-900">{{ inv.projectTitle }}</div> <div class="text-xs text-gray-500">{{ inv.crop }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ getFarmerDisplayIdentifier(inv.farmerWallet, 10) }} <button @click="showFarmerProfile(inv.farmerWallet)" class="ml-1 text-blue-500 hover:text-blue-700 text-xs focus:outline-none" title="View Farmer Info"> <i class="fas fa-info-circle"></i> </button> <button @click="startOrGoToConversation(inv.farmerWallet)" v-if="currentUserIdentifier !== inv.farmerWallet" class="ml-1 text-green-600 hover:text-green-700 text-xs focus:outline-none" title="Message Farmer"> <i class="fas fa-envelope"></i> </button> </td> <td class="px-6 py-4 whitespace-nowrap"> <div class="text-sm font-mono text-gray-900">{{ inv.amount }}</div> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {{ formatTimestamp(inv.investmentDate, true) }} </td> <td class="px-6 py-4 whitespace-nowrap"> <span :class="{'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true, 'bg-blue-100 text-blue-800': inv.status === 'active', 'bg-green-100 text-green-800': inv.status === 'harvested', 'bg-yellow-100 text-yellow-800': inv.status === 'growing'}"> {{ inv.status.charAt(0).toUpperCase() + inv.status.slice(1) }} </span> </td> <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600"> <a href="#" @click.prevent="viewInvestmentDetails(inv)" class="hover:underline">View</a> </td> </tr> </tbody> </table> </div> <div class="mt-4 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">Go to Full Portfolio <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> </div> <div> <h3 class="text-xl font-bold text-green-700 mb-4 border-b pb-2 flex items-center"> <i class="fas fa-link mr-2"></i>Platform Verification (Simulated) </h3> <div class="bg-gray-50 p-5 rounded-lg border"> <div class="flex items-center mb-4"> <i class="fas fa-shield-alt text-green-600 text-2xl mr-3"></i> <div> <h4 class="font-bold text-gray-800">PestiVid Platform Records</h4> <p class="text-sm text-gray-600">All your investment transactions are recorded on the PestiVid platform (Simulated Ledger).</p> </div> </div> <div v-if="investorTransactions.length > 0" class="mt-4"> <h5 class="font-medium text-sm mb-2">Recent Transactions</h5> <div class="space-y-2"> <div v-for="tx in investorTransactions.slice(0, 3)" :key="tx._id" class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-white rounded border text-sm"> <div class="flex items-center mb-1 sm:mb-0"> <span :class="{'px-2 py-0.5 text-xs rounded-full mr-2': true, 'bg-green-100 text-green-800': tx.type === 'investment', 'bg-blue-100 text-blue-800': tx.type === 'payout'}"> {{ tx.type === 'investment' ? 'Invest' : 'Payout' }} </span> <span class="font-mono text-xs text-gray-500 truncate" :title="tx.txHash">{{ tx.txHash.substring(0, 8) }}...{{ tx.txHash.substring(tx.txHash.length - 8) }}</span> <a :href="solanaExplorerUrl(tx.txHash)" target="_blank" class="text-blue-600 hover:underline whitespace-nowrap"> <i class="fas fa-external-link-alt"></i> View (Demo Link) </a> </div> <div class="text-right w-full sm:w-auto"> <div class="font-mono text-sm">{{ tx.amount }} SOL</div> <div class="text-xs text-gray-500">{{ formatTimestamp(tx.date, true) }}</div> </div> </div> </div> <div class="mt-3 text-right"> <button @click="switchPage('investorPortfolio')" class="text-green-700 text-sm hover:underline">View all transactions <i class="fas fa-arrow-right ml-1"></i></button> </div> </div> <div v-else class="bg-white p-4 rounded border text-center text-sm text-gray-600"> <p>No platform transactions recorded yet.</p> </div> </div> </div> </div>
-                    </div>
-                    </div>
+                </div>
                 </section>
                 <!-- Messaging Section -->
                 <section v-if="current==='messaging'" class="max-w-6xl mx-auto mt-6">
@@ -846,85 +877,175 @@
                         <p class="font-bold">User: {{ currentUser ? currentUser.name : 'User' }} - Messaging</p>
                         <p class="text-sm">Chat with other users on the platform. Messages are stored locally in your browser.</p>
                     </div>
-                <div class="bg-white rounded-lg shadow-md flex" style="height: calc(100vh - 200px);">
-                    <div class="w-full md:w-1/3 border-r flex flex-col bg-gray-50">
-                        <div class="p-4 border-b"> <h2 class="text-xl font-semibold text-green-700">Conversations</h2> </div>
-                        <div class="overflow-y-auto flex-1">
-                            <div v-if="userConversations.length === 0" class="p-4 text-center text-gray-500 mt-10"> <i class="fas fa-comment-slash fa-3x mb-3 text-gray-300"></i> <p>No conversations yet.</p> <p class="text-xs mt-1">Start a chat from a user's profile or project.</p> </div>
-                            <div v-for="conv in userConversations" :key="conv._id" @click="selectConversation(conv._id)" class="p-3 hover:bg-gray-100 cursor-pointer border-b flex items-center space-x-3" :class="{'bg-green-100 border-l-4 border-green-500': activeConversationId === conv._id, 'bg-white': activeConversationId !== conv._id}">
-                                <div class="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center text-lg flex-shrink-0"> {{ getOtherParticipantInitial(conv) }} </div>
-                                <div class="flex-1 overflow-hidden"> <div class="font-semibold text-gray-800 truncate">{{ getOtherParticipantDisplayAddress(conv) }}</div> <div class="text-xs text-gray-500 truncate">{{ conv.lastMessageSnippet }}</div> </div>
-                                <div class="text-xs text-gray-400 self-start whitespace-nowrap">{{ formatTimestamp(conv.lastMessageTimestamp, true) }}</div>
-                                <div v-if="getUnreadCountForConversation(conv._id) > 0" class="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs ml-auto flex-shrink-0"> {{ getUnreadCountForConversation(conv._id) }} </div>
+                    <div class="bg-white rounded-lg shadow-md flex" style="height: calc(100vh - 200px);">
+                        <div class="w-full md:w-1/3 border-r flex flex-col bg-gray-50">
+                            <div class="p-4 border-b">
+                                <h2 class="text-xl font-semibold text-green-700">Conversations</h2>
                             </div>
-                        </div>
-                    </div>
-                    <div class="w-full md:w-2/3 flex flex-col bg-white">
-                        <div v-if="!activeConversationId" class="flex-1 flex flex-col items-center justify-center text-gray-400 p-10 text-center"> <i class="fas fa-comments fa-4x mb-4"></i> <h3 class="text-xl text-gray-600">Welcome to PestiVid Chat</h3> <p>Select a conversation from the left to view messages, or start a new chat from a user's profile or project page.</p> </div>
-                        <template v-else>
-                            <div class="p-4 border-b bg-gray-50 flex items-center sticky top-0 z-10"> <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm mr-3 flex-shrink-0"> {{ activeConversationPartnerInitial ? activeConversationPartnerInitial : '?' }} </div> <h3 class="font-semibold text-lg text-green-800">{{ activeConversationPartnerDisplayAddress }}</h3> </div>
-                            <div class="flex-1 overflow-y-auto p-4 space-y-3 message-view-container bg-gray-100" ref="messageContainer">
-                                <div v-if="currentMessages.length === 0" class="text-center text-gray-500 py-10"> No messages in this conversation yet. Say hello! </div>
-                                <div v-for="msg in currentMessages" :key="msg._id" class="flex" :class="msg.sender === currentUserIdentifier ? 'justify-end' : 'justify-start'">
-                                    <div class="max-w-xs md:max-w-md lg:max-w-lg"> <div class="p-3 rounded-xl shadow" :class="msg.sender === currentUserIdentifier ? 'bg-green-600 text-white' : 'bg-white text-gray-800 border'"> <p class="text-sm leading-relaxed">{{ msg.text }}</p> </div> <p class="text-xs mt-1 px-1" :class="msg.sender === currentUserIdentifier ? 'text-gray-400 text-right' : 'text-gray-400 text-left'"> {{ formatTimestamp(msg.timestamp) }} <span v-if="msg.sender === currentUserIdentifier && msg.read"><i class="fas fa-check-double text-blue-400 ml-1" title="Read"></i></span> <span v-if="msg.sender === currentUserIdentifier && !msg.read"><i class="fas fa-check text-gray-400 ml-1" title="Sent"></i></span> </p> </div>
+                            <div class="overflow-y-auto flex-1">
+                                <div v-if="!userConversations || userConversations.length === 0" class="p-4 text-center text-gray-500 mt-10">
+                                    <i class="fas fa-comment-slash fa-3x mb-3 text-gray-300"></i>
+                                    <p>No conversations yet.</p>
+                                    <p class="text-xs mt-1">Start a chat from a user's profile or project.</p>
+                                </div>
+                                <div v-else v-for="conv in userConversations" :key="conv._id" @click="selectConversation(conv._id)"
+                                     class="p-3 hover:bg-gray-100 cursor-pointer border-b flex items-center space-x-3"
+                                     :class="{'bg-green-100 border-l-4 border-green-500': activeConversationId === conv._id, 'bg-white': activeConversationId !== conv._id}">
+                                    <div class="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center text-lg flex-shrink-0">
+                                        {{ getOtherParticipantInitial(conv) }}
+                                    </div>
+                                    <div class="flex-1 overflow-hidden">
+                                        <div class="font-semibold text-gray-800 truncate">{{ getOtherParticipantDisplayAddress(conv) }}</div>
+                                        <div class="text-xs text-gray-500 truncate">{{ conv.lastMessageSnippet || 'No messages yet' }}</div>
+                                    </div>
+                                    <div class="text-xs text-gray-400 self-start whitespace-nowrap">
+                                        {{ formatTimestamp(conv.lastMessageTimestamp || Date.now(), true) }}
+                                    </div>
+                                    <div v-if="getUnreadCountForConversation(conv._id) > 0"
+                                         class="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs ml-auto flex-shrink-0">
+                                        {{ getUnreadCountForConversation(conv._id) }}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="p-3 border-t bg-gray-50"> <form @submit.prevent="sendMessage" class="flex gap-3 items-center"> <input v-model="messageInputText" type="text" placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-green-500 focus:border-green-500 text-sm" required> <button type="submit" :disabled="!messageInputText.trim()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50"> <i class="fas fa-paper-plane mr-1"></i> Send </button> </form> </div>
-                        </template>
-                    </div>
-                </div>
-                </section>
-                <!-- Plant Recommendation Section -->
-                <section v-if="current==='plantRecommendation'" class="max-w-3xl mx-auto mt-6">
-                <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-leaf mr-2"></i>Plant Disease Detection & Recommendation</h2>
-                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
-                    <p class="font-bold">User: {{ currentUser ? currentUser.name : 'Farmer' }} (Role: Farmer)</p>
-                    <p class="text-sm">Upload a plant image for AI analysis. This feature is currently simulated.</p>
-                </div>
-                <div class="bg-white rounded shadow-md p-6 space-y-6">
-                    <p class="text-sm text-gray-600">Upload an image of an affected plant. It will attempt to identify the plant, detect diseases, and suggest treatments.</p>
-                    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                    <p class="font-bold">Developer Note (Simulated Feature):</p>
-                    <p class="text-sm">This Plant Recommendation feature's AI analysis is simulated in this demo. It will provide a generic response based on common plant issues if the filename hints at a specific plant/disease. For a functional version, this would integrate with a service like Google Gemini API.</p>
-                    </div>
-                    <div>
-                    <label class="block text-gray-600 mb-1 text-sm">Upload Plant Image</label>
-                    <input type="file" @change="handlePlantImageUpload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                    </div>
-                    <div v-if="plantImageUrl" class="mt-4">
-                    <h4 class="text-md font-semibold text-gray-700 mb-2">Image Preview:</h4>
-                    <img :src="plantImageUrl" alt="Plant Preview" class="max-w-xs md:max-w-sm rounded-md border shadow mx-auto">
-                    </div>
-                    <button @click="analyzePlant" :disabled="!plantImageFile || analysisInProgress" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center justify-center" :class="{'opacity-50 cursor-not-allowed': !plantImageFile || analysisInProgress}">
-                    <i :class="analysisInProgress ? 'fas fa-spinner fa-spin' : 'fas fa-search-plus'" class="mr-2"></i>
-                    {{ analysisInProgress ? 'Analyzing...' : 'Analyze Plant (Simulated)' }}
-                    </button>
-                    <div v-if="analysisErrorText" class="mt-4 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded text-sm">
-                    <p class="font-bold">Analysis Error:</p>
-                    <p>{{ analysisErrorText }}</p>
-                    </div>
-                    <div v-if="parsedAnalysis.plantName && !analysisInProgress && !analysisErrorText" class="mt-6 border-t pt-6 space-y-4">
-                    <h3 class="text-xl font-semibold text-green-700">Analysis Results:</h3>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Identified Plant:</p>
-                        <p class="text-lg text-gray-800">{{ parsedAnalysis.plantName || 'Could not identify plant.' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Detected Disease:</p>
-                        <p class="text-lg text-gray-800 font-semibold" :class="{'text-red-600': parsedAnalysis.diseaseName && parsedAnalysis.diseaseName.toLowerCase() !== 'healthy' && parsedAnalysis.diseaseName.toLowerCase() !== 'not apparent' && parsedAnalysis.diseaseName.toLowerCase() !== 'unknown', 'text-green-600': parsedAnalysis.diseaseName && (parsedAnalysis.diseaseName.toLowerCase() === 'healthy' || parsedAnalysis.diseaseName.toLowerCase() === 'not apparent')}">
-                        {{ parsedAnalysis.diseaseName || 'Could not determine disease.' }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Recommended Treatment / Pesticides:</p>
-                        <p class="text-md text-gray-700 whitespace-pre-wrap">{{ parsedAnalysis.treatmentRecommended || 'No specific treatment recommended.' }}</p>
-                    </div>
-                    <div v-if="analysisResultText && (!parsedAnalysis.plantName || parsedAnalysis.plantName === 'Unknown' || parsedAnalysis.plantName === '-')" class="mt-4 bg-gray-50 p-3 rounded border text-xs">
-                            <p class="font-semibold mb-1">Raw Output (for debugging if parsing failed):</p>
-                            <pre class="whitespace-pre-wrap overflow-x-auto">{{ analysisResultText }}</pre>
+                        </div>
+                        <div class="w-full md:w-2/3 flex flex-col bg-white">
+                            <div v-if="!activeConversationId" class="flex-1 flex flex-col items-center justify-center text-gray-400 p-10 text-center">
+                                <i class="fas fa-comments fa-4x mb-4"></i>
+                                <h3 class="text-xl text-gray-600">Welcome to PestiVid Chat</h3>
+                                <p>Select a conversation from the left to view messages, or start a new chat from a user's profile or project page.</p>
+                            </div>
+                            <template v-else>
+                                <div class="p-4 border-b bg-gray-50 flex items-center sticky top-0 z-10">
+                                    <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm mr-3 flex-shrink-0">
+                                        {{ activeConversationPartnerInitial || '?' }}
+                                    </div>
+                                    <h3 class="font-semibold text-lg text-green-800">{{ activeConversationPartnerDisplayAddress || 'Chat' }}</h3>
+                                </div>
+                                <div class="flex-1 overflow-y-auto p-4 space-y-3 message-view-container bg-gray-100" ref="messageContainer">
+                                    <div v-if="!currentMessages || currentMessages.length === 0" class="text-center text-gray-500 py-10">
+                                        No messages in this conversation yet. Say hello!
+                                    </div>
+                                    <div v-else v-for="msg in currentMessages" :key="msg._id" class="flex"
+                                         :class="msg.sender === currentUserIdentifier ? 'justify-end' : 'justify-start'">
+                                        <div class="max-w-xs md:max-w-md lg:max-w-lg">
+                                            <div class="p-3 rounded-xl shadow"
+                                                 :class="msg.sender === currentUserIdentifier ? 'bg-green-600 text-white' : 'bg-white text-gray-800 border'">
+                                                <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+                                            </div>
+                                            <p class="text-xs mt-1 px-1"
+                                               :class="msg.sender === currentUserIdentifier ? 'text-gray-400 text-right' : 'text-gray-400 text-left'">
+                                                {{ formatTimestamp(msg.timestamp || Date.now()) }}
+                                                <span v-if="msg.sender === currentUserIdentifier && msg.read">
+                                                    <i class="fas fa-check-double text-blue-400 ml-1" title="Read"></i>
+                                                </span>
+                                                <span v-if="msg.sender === currentUserIdentifier && !msg.read">
+                                                    <i class="fas fa-check text-gray-400 ml-1" title="Sent"></i>
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-3 border-t bg-gray-50">
+                                    <form @submit.prevent="sendMessage" class="flex gap-3 items-center">
+                                        <input v-model="messageInputText" type="text" placeholder="Type your message..."
+                                               class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-green-500 focus:border-green-500 text-sm" required>
+                                        <button type="submit" :disabled="!messageInputText || !messageInputText.trim()"
+                                                class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50">
+                                            <i class="fas fa-paper-plane mr-1"></i> Send
+                                        </button>
+                                    </form>
+                                </div>
+                            </template>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <!-- NEW Plant Analysis Section (for potato leaf) -->
+                <section v-if="current==='plantAnalysis'" class="max-w-6xl mx-auto mt-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-2xl font-bold text-green-700"><i class="fas fa-leaf mr-2"></i>Plant Disease Analysis</h2>
+                    </div>
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+                        <p class="font-bold">Plant Disease Detection (Potato Leaf)</p>
+                        <p class="text-sm">Upload an image of a potato plant leaf to detect diseases and get treatment recommendations. This feature connects to an AI model.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Image Upload Section -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-green-700 mb-4">Upload Plant Image</h3>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Select a clear image of the plant leaf
+                                </label>
+                                <input type="file"
+                                       accept="image/*"
+                                       @change="handlePlantImageUpload"
+                                       class="block w-full text-sm text-gray-500
+                                              file:mr-4 file:py-2 file:px-4
+                                              file:rounded-full file:border-0
+                                              file:text-sm file:font-semibold
+                                              file:bg-green-50 file:text-green-700
+                                              hover:file:bg-green-100">
+                            </div>
+                            <div v-if="plantImageFile && plantImageUrl" class="mb-4">
+                                <p class="text-sm text-gray-600 mb-2">Selected image:</p>
+                                <div class="relative bg-gray-100 rounded-lg overflow-hidden" style="height: 200px;">
+                                    <img :src="plantImageUrl"
+                                         class="absolute inset-0 w-full h-full object-contain"
+                                         alt="Selected plant image">
+                                </div>
+                            </div>
+                            <button @click="analyzePlant"
+                                    :disabled="!plantImageFile || analysisInProgress"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center justify-center"
+                                    :class="{'opacity-50 cursor-not-allowed': !plantImageFile || analysisInProgress}">
+                                <i :class="analysisInProgress ? 'fas fa-spinner fa-spin' : 'fas fa-search-plus'" class="mr-2"></i>
+                                {{ analysisInProgress ? 'Analyzing...' : 'Analyze Plant' }}
+                            </button>
+                        </div>
+                        <!-- Analysis Results Section -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-green-700 mb-4">Analysis Results</h3>
+                            <div v-if="analysisInProgress" class="flex flex-col items-center justify-center py-10">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+                                <p class="mt-3 text-gray-600">Analyzing plant image...</p>
+                            </div>
+                            <div v-else-if="analysisErrorText" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                                <p class="font-bold">Analysis Error</p>
+                                <p>{{ analysisErrorText }}</p>
+                            </div>
+                            <div v-else-if="parsedAnalysis.diseaseName" class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center mb-3">
+                                        <span class="font-semibold w-32">Plant:</span>
+                                        <span>{{ parsedAnalysis.plantName }}</span>
+                                    </div>
+                                    <div class="flex items-center mb-3">
+                                        <span class="font-semibold w-32">Disease:</span>
+                                        <span :class="{'text-green-600': parsedAnalysis.diseaseName === 'Healthy' || (parsedAnalysis.diseaseName && parsedAnalysis.diseaseName.toLowerCase().includes('healthy')), 'text-red-600 font-bold': parsedAnalysis.diseaseName && parsedAnalysis.diseaseName !== 'Healthy' && !parsedAnalysis.diseaseName.toLowerCase().includes('healthy')}">
+                                            {{ parsedAnalysis.diseaseName }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center mb-3">
+                                        <span class="font-semibold w-32">Confidence:</span>
+                                        <span>{{ parsedAnalysis.confidence }}</span>
+                                    </div>
+                                </div>
+                                <div v-if="parsedAnalysis.treatmentRecommended" class="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
+                                    <p class="font-semibold mb-2">Treatment Recommendation:</p>
+                                    <p class="text-sm">{{ parsedAnalysis.treatmentRecommended }}</p>
+                                </div>
+                                <div v-if="analysisResultText && (!parsedAnalysis.plantName || !parsedAnalysis.diseaseName)" class="mt-4 bg-gray-50 p-3 rounded border text-xs">
+                                    <p class="font-semibold mb-1">Raw AI Output (for debugging if parsing failed):</p>
+                                    <pre class="whitespace-pre-wrap overflow-x-auto">{{ analysisResultText }}</pre>
+                                </div>
+                            </div>
+                            <div v-else class="flex flex-col items-center justify-center py-10 text-gray-500">
+                                <i class="fas fa-leaf text-4xl mb-3"></i>
+                                <p>Upload and analyze a plant image to see results</p>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Farmer Chatbot Section (AgriBot) -->
@@ -961,7 +1082,7 @@
                         </div>
                     </div>
                 </section>
-            </div>
+            </div> <!-- End Main Content Sections Wrapper -->
 
             <!-- Modals (Purchase Video, Buy Listing, Investment Details, Farmer Profile) -->
             <div v-if="selectedPurchase && showPurchaseVideo" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -1021,7 +1142,6 @@
                                 </div>
                                 <div v-else class="mb-4 text-xs text-gray-500"> No project updates posted by the farmer yet. </div>
                                 <div class="grid grid-cols-2 gap-4 mb-4 text-sm"> <div> <div class="text-xs text-gray-500">Expected Return</div> <div class="font-medium text-green-700 font-mono">{{ calculateExpectedReturn(selectedInvestment) }} SOL</div> </div> <div> <div class="text-xs text-gray-500">ROI</div> <div class="font-medium text-green-700">{{ selectedInvestment.roi }}%</div> </div> <div> <div class="text-xs text-gray-500">Land Size</div> <div class="font-medium">{{ selectedInvestment.acres }} acres</div> </div> <div> <div class="text-xs text-gray-500">Your Share</div> <div class="font-medium">{{ selectedInvestment.investorShare }}%</div> </div> <div> <div class="text-xs text-gray-500">Video File Hash</div> <p class="font-medium font-mono text-xs break-all" :title="selectedInvestment.videoFileHash || 'N/A'">{{ selectedInvestment.videoFileHash ? selectedInvestment.videoFileHash.substring(0,10) + '...' : 'N/A' }}</p> </div> </div> <div class="bg-gray-100 p-3 rounded mb-4 border"> <div class="text-sm font-medium mb-1">Platform Transaction (Simulated)</div> <div class="flex items-center text-xs"> <span class="font-mono bg-white px-2 py-1 rounded border mr-2 truncate" :title="selectedInvestment.txHash">{{ selectedInvestment.txHash }}</span> <a :href="solanaExplorerUrl(selectedInvestment.txHash)" target="_blank" class="text-blue-600 hover:underline whitespace-nowrap"> <i class="fas fa-external-link-alt"></i> View (Demo Link) </a> </div> </div> <div v-if="selectedInvestment.status === 'harvested'" class="bg-green-100 p-3 rounded border border-green-200"> <div class="flex items-center"> <i class="fas fa-check-circle text-green-600 mr-2 text-lg"></i> <div> <div class="font-medium">Harvest Completed & Payout Processed</div> <div class="text-sm">Your return of {{ calculateExpectedReturn(selectedInvestment) }} SOL has been simulated.</div> </div> </div> </div> <div v-else-if="selectedInvestment.status === 'growing'" class="bg-yellow-50 p-3 rounded border border-yellow-200"> <div class="flex items-center"> <i class="fas fa-hourglass-half text-yellow-600 mr-2 text-lg"></i> <div> <div class="font-medium">Project Growing</div> <div class="text-sm">Harvest expected within {{ selectedInvestment.timeline }} months. Progress: {{selectedInvestment.progress}}%.</div> </div> </div> </div> </div> </div> </div>
-
                 <div class="bg-gray-50 p-4 flex justify-end rounded-b-lg sticky bottom-0 border-t"> <button @click="showInvestmentDetailsModal=false" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm"> Close </button> </div>
             </div>
             </div>
@@ -1112,7 +1232,7 @@
                             <i class="fas fa-eye mr-1"></i> View Projects
                         </button>
                     </div>
-                    <button @click="closeFarmerProfileModal" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">
+                     <button @click="closeFarmerProfileModal" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">
                         Close
                     </button>
                 </div>
@@ -1277,7 +1397,7 @@ data: {
   // Get your JWT from https://app.pinata.cloud/keys
   // Video uploads WILL FAIL if this is not your valid JWT.
   // ========================================================================
-  pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6ImJlNzJjZTMwNDk5YTNmNWNkZDcxIiwic2NvcGVkS2V5U2VjcmV0IjoiYTE2YjJiZDE4ZjgyNmFiZmY2MGE0Mzk5Nzk2NTZkNzMzYjY5MDJlM2U0Y2JlOTcxNTJiYTVkMTM3ZTZkMTlmYiIsImV4cCI6MTc4MTQ1MjUzNX0.o-PFoSsBVlhUdgf74ZF5ynVDtODGP0IPiknDrE33h5g',
+  pinataJwt: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE', // <<<<< REPLACE THIS!
   pinataGateway: 'gateway.pinata.cloud', // Using public Pinata gateway for better compatibility
 
   // --- Messaging State ---
@@ -1296,10 +1416,19 @@ data: {
   targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
 
   // --- AI Features State ---
-  plantImageFile: null, plantImageUrl: null, plantImageMimeType: null,
-  analysisInProgress: false, analysisResultText: '',
-  parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null },
+  // Plant analysis related properties
+  plantImageFile: null,
+  plantImageUrl: null, // For preview
+  plantImageMimeType: null,
+  analysisInProgress: false,
+  analysisResultText: '', // Raw text from AI
   analysisErrorText: '',
+  parsedAnalysis: { // Structured data from AI response
+      plantName: null,
+      diseaseName: null,
+      confidence: null,
+      treatmentRecommended: null
+  },
   chatMessages: [], chatInput: '', isGroqLoading: false,
   groqSystemPrompt: "You are AgriBot, a knowledgeable and friendly AI assistant for farmers. Your expertise includes crop management (like tomatoes, strawberries, lettuce, peppers), pest and disease control (organic and conventional methods), soil health, irrigation, farm-to-market advice, and general agricultural best practices. You can also help explain features of the PestiVid platform. Provide clear, concise, and actionable advice. If a question is outside your agricultural expertise, politely state that. Always remind the user that your advice is for informational purposes and they should consult with local agricultural experts or conduct their own research before making critical farming decisions.",
 
@@ -1479,9 +1608,9 @@ watch: {
                 this.updateAvatarContextAndQuickActions();
             }
         }
-        if (oldPage === 'plantRecommendation' && newPage !== 'plantRecommendation') {
+        if (oldPage === 'plantAnalysis' && newPage !== 'plantAnalysis') { // Changed from plantRecommendation
             this.plantImageFile = null; this.plantImageUrl = null; this.plantImageMimeType = null;
-            this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
+            this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, confidence: null, treatmentRecommended: null };
             this.analysisErrorText = '';
         }
     },
@@ -1594,6 +1723,9 @@ methods: {
             this.addNotification('Video failed to load. IPFS content may not be available yet.', 'warning');
         }
     },
+    handleVideoLoadStart(event) {
+        console.log('Video loading started:', event.target.src);
+    },
     handleVideoCanPlay(event) {
         console.log('Video can play:', event.target.src);
         const video = event.target;
@@ -1604,12 +1736,6 @@ methods: {
         if (errorDiv) {
             errorDiv.remove();
         }
-    },
-    handleVideoLoadStart(event) {
-        console.log('Video loading started:', event.target.src);
-    },
-    handleVideoCanPlay(event) {
-        console.log('Video can play:', event.target.src);
     },
 
     switchPage(page) { this.current = page; this.showMobileMenu = false; },
@@ -1679,7 +1805,7 @@ methods: {
              // Use the first available gateway
              const gateway = gateways[0];
              const url = `https://${gateway}/ipfs/${cleanCid}`;
-             console.log(`Generated IPFS URL: ${url} (using gateway: ${gateway})`);
+             // console.log(`Generated IPFS URL: ${url} (using gateway: ${gateway})`); // Can be too noisy
              return url;
          }
 
@@ -1687,8 +1813,8 @@ methods: {
          return "https://www.w3schools.com/html/mov_bbb.mp4"; // Default fallback
      },
 
-     // Alternative video URL for fallback
-     getAlternativeVideoUrl(objectKeyOrCid, storageType = null) {
+    // Alternative video URL for fallback
+    getAlternativeVideoUrl(objectKeyOrCid, storageType = null) {
          if (!objectKeyOrCid || storageType !== 'ipfs') return null;
 
          const cleanCid = objectKeyOrCid.trim();
@@ -2138,6 +2264,7 @@ methods: {
         if (!this.isAuthenticated || this.role !== 'farmer') { this.addNotification("Log in as Farmer.", "info"); return; }
         if (!this.listingForm.cid || this.listingForm.minPrice === null || this.listingForm.maxPrice === null) { this.addNotification("Select video and price range.", "warning"); return; }
         const minP = parseFloat(this.listingForm.minPrice); const maxP = parseFloat(this.listingForm.maxPrice);
+
         if (isNaN(minP) || isNaN(maxP) || minP <= 0 || maxP <= 0 || minP > maxP) { this.addNotification("Valid prices required.", "warning"); return; }
 
         const vid = this.farmerVideos.find(v => {
@@ -2775,8 +2902,7 @@ methods: {
      },
      getFarmerVideoCount(farmerId) {
         if (!farmerId) return 0;
-        // Count videos from farmer (this would need to be implemented based on your video storage)
-        return this.allFundingRequests.filter(r => r.farmerWallet === farmerId && r.cid).length;
+        return this.farmerVideos.filter(v => v.farmerWallet === farmerId).length;
      },
      getFarmerTotalInvestments(farmerId) {
         if (!farmerId) return 0;
@@ -3131,40 +3257,83 @@ methods: {
         } catch (e) { console.error("Error formatting timestamp:", e, isoString); return isoString; }
     },
 
-    // --- Plant Recommendation (AI Simulated) ---
+    // --- Plant Analysis (AI Integration) ---
     handlePlantImageUpload(event) {
         const file = event.target.files[0];
         if (file) {
-            this.plantImageFile = file; if (this.plantImageUrl) URL.revokeObjectURL(this.plantImageUrl);
-            this.plantImageUrl = URL.createObjectURL(file); this.plantImageMimeType = file.type;
-            this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = '';
-        } else { this.plantImageFile = null; if (this.plantImageUrl) URL.revokeObjectURL(this.plantImageUrl); this.plantImageUrl = null; this.plantImageMimeType = null; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = ''; }
+            this.plantImageFile = file;
+            if (this.plantImageUrl) URL.revokeObjectURL(this.plantImageUrl);
+            this.plantImageUrl = URL.createObjectURL(file);
+            this.plantImageMimeType = file.type;
+            this.analysisResultText = '';
+            this.parsedAnalysis = { plantName: null, diseaseName: null, confidence: null, treatmentRecommended: null };
+            this.analysisErrorText = '';
+        } else {
+            this.plantImageFile = null;
+            if (this.plantImageUrl) URL.revokeObjectURL(this.plantImageUrl);
+            this.plantImageUrl = null;
+            this.plantImageMimeType = null;
+            this.analysisResultText = '';
+            this.parsedAnalysis = { plantName: null, diseaseName: null, confidence: null, treatmentRecommended: null };
+            this.analysisErrorText = '';
+        }
     },
     async analyzePlant() {
-        if (!this.plantImageFile) { this.addNotification("Upload plant image first.", "warning"); return; }
-        this.analysisInProgress = true; this.analysisResultText = ''; this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null }; this.analysisErrorText = '';
-        this.loadingMessage = "Analyzing plant image (simulated)..."; this.showLoadingModal = true;
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!this.plantImageFile) {
+            this.addNotification("Please upload a plant image first.", "warning");
+            return;
+        }
 
-        const fileName = this.plantImageFile.name.toLowerCase();
-        let plant = "Unknown Plant", disease = "Unknown Disease", treatment = "General plant care advice: ensure proper watering, sunlight, and soil nutrients. Consult a local expert for specific issues.";
-        if (fileName.includes("tomato")) { plant = "Tomato Plant"; if (fileName.includes("blight")) { disease = "Late Blight"; treatment = "Apply copper-based fungicides. Improve air circulation. Remove infected leaves."; } else if (fileName.includes("healthy")) { disease = "Healthy"; treatment = "Maintain good watering and fertilization schedule."; } }
-        else if (fileName.includes("rose")) { plant = "Rose Bush"; if (fileName.includes("spot")) { disease = "Black Spot"; treatment = "Use fungicide. Remove fallen leaves. Water at base."; } }
-        else { plant = "Generic Leaf"; disease = "Nutrient Deficiency (Potassium)"; treatment = "Apply potassium-rich fertilizer. Check soil pH.";}
+        this.analysisInProgress = true;
+        this.analysisResultText = '';
+        this.parsedAnalysis = { plantName: null, diseaseName: null, confidence: null, treatmentRecommended: null };
+        this.analysisErrorText = '';
 
-        this.analysisResultText = `PLANT: ${plant};\nDISEASE: ${disease};\nTREATMENT: ${treatment}`;
-        this.parseAnalysisResult(this.analysisResultText);
-        this.addNotification("Plant analysis complete (simulated)!", "success");
-        this.analysisInProgress = false; this.showLoadingModal = false; this.loadingMessage = "";
-    },
-    parseAnalysisResult(text) {
-        this.parsedAnalysis = { plantName: null, diseaseName: null, treatmentRecommended: null };
-        if (!text || typeof text !== 'string') return;
-        const plantMatch = text.match(/PLANT:\s*([^;]+)/i); const diseaseMatch = text.match(/DISEASE:\s*([^;]+)/i); const treatmentMatch = text.match(/TREATMENT:\s*(.+)/is);
-        if (plantMatch && plantMatch[1]) this.parsedAnalysis.plantName = plantMatch[1].trim();
-        if (diseaseMatch && diseaseMatch[1]) this.parsedAnalysis.diseaseName = diseaseMatch[1].trim();
-        if (treatmentMatch && treatmentMatch[1]) this.parsedAnalysis.treatmentRecommended = treatmentMatch[1].trim();
-        if (!this.parsedAnalysis.diseaseName || ['Unknown', '-'].includes(this.parsedAnalysis.diseaseName)) { const lowerText = text.toLowerCase(); if (lowerText.includes('healthy')) this.parsedAnalysis.diseaseName = 'Healthy'; else if (lowerText.includes('not apparent')) this.parsedAnalysis.diseaseName = 'Not Apparent'; else if (lowerText.includes('no disease')) this.parsedAnalysis.diseaseName = 'Healthy / Not Apparent';}
+        try {
+            const formData = new FormData();
+            formData.append('file', this.plantImageFile);
+
+            console.log("Sending request to Flask server...");
+            
+            // Use the simple server since it's working
+            const url = 'http://localhost:5000/predict';
+            console.log(`Using endpoint: ${url}`);
+            
+            // Try using fetch instead of axios
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                // Don't set Content-Type header, let the browser set it with the boundary
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log("Response received:", result);
+            
+            this.analysisResultText = JSON.stringify(result, null, 2);
+
+            if (result.error) {
+                this.analysisErrorText = result.error;
+                this.addNotification(`Analysis error: ${result.error}`, "error");
+            } else {
+                this.parsedAnalysis = {
+                    plantName: "Potato Plant",
+                    diseaseName: result.predicted_disease || "Unknown",
+                    confidence: result.confidence || "N/A",
+                    treatmentRecommended: result.recommendation || "No specific treatment recommended."
+                };
+                this.addNotification("Plant analysis complete!", "success");
+            }
+        } catch (error) {
+            console.error('Plant analysis request error:', error);
+            this.analysisErrorText = `Error: ${error.message}`;
+            this.addNotification(this.analysisErrorText, "error");
+        } finally {
+            this.analysisInProgress = false;
+        }
     },
 
     // --- Farmer Chatbot (AgriBot - AI Simulated) ---
@@ -3186,35 +3355,17 @@ methods: {
         if (!this.chatInput.trim() || this.isGroqLoading || !this.isAuthenticated || this.role !== 'farmer') return;
         const userMessageText = this.chatInput.trim();
         this.chatMessages.push({ _id: this.generateId('user_'), sender: 'user', text: userMessageText, timestamp: new Date().toISOString() });
-        this.chatInput = ''; this.$nextTick(() => this.scrollToChatBottom());
-        this.isGroqLoading = true;
-    },
-    debugFundingRequests() {
-        console.log('=== FUNDING REQUESTS DEBUG ===');
-        console.log('Total allFundingRequests:', this.allFundingRequests.length);
-        console.log('All funding requests:', this.allFundingRequests);
-        console.log('Current filters:', this.investorFilters);
-        console.log('Filtered results:', this.filteredFundingRequests.length);
-        console.log('Filtered funding requests:', this.filteredFundingRequests);
-        console.log('Unique crops:', this.uniqueFundingCrops);
-        console.log('Current user role:', this.role);
-        console.log('Is authenticated:', this.isAuthenticated);
-        this.addNotification('Debug info logged to console. Check browser developer tools.', 'info');
-    },
-    async sendChatMessage() {
-        if (!this.chatInput.trim() || this.isGroqLoading) return;
-        const userMessageText = this.chatInput.trim();
-        this.chatMessages.push({ _id: this.generateId('user_'), sender: 'user', text: userMessageText, timestamp: new Date().toISOString() });
         this.chatInput = '';
         this.$nextTick(() => this.scrollToChatBottom());
 
         this.isGroqLoading = true;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
         let botResponse = "I'm sorry, I can only provide simulated responses in this demo. ";
         if (userMessageText.toLowerCase().includes("tomato blight")) botResponse = "For tomato blight, ensure good air circulation, water at the base of plants, and consider using copper-based fungicides preventatively. Remove and destroy infected plant parts.";
         else if (userMessageText.toLowerCase().includes("strawberry planting")) botResponse = "Plant strawberries in well-drained soil with plenty of organic matter. Space them about 12-18 inches apart. Ensure they get full sun.";
         else if (userMessageText.toLowerCase().includes("hello") || userMessageText.toLowerCase().includes("hi")) botResponse = "Hello there! How can I help you with your farming questions today?";
         else botResponse += `You asked about: "${userMessageText}". For real advice, integrate with a live AI.`;
+
         this.chatMessages.push({ _id: this.generateId('bot_'), sender: 'bot', text: botResponse, timestamp: new Date().toISOString() });
         if (this.isAuthenticated && this.currentUserIdentifier) {
             localStorage.setItem(`pestivid_agribot_chat_${this.currentUserIdentifier}`, JSON.stringify(this.chatMessages));
@@ -3268,7 +3419,7 @@ methods: {
                 else if (pageNameLower.includes('portfolio')) actionTargetPage = 'investorPortfolio';
                 else if (pageNameLower.includes('profile') || pageNameLower.includes('my account')) actionTargetPage = 'userProfile';
                 else if (pageNameLower.includes('messaging') || pageNameLower.includes('chat')) actionTargetPage = 'messaging';
-                else if (pageNameLower.includes('plantrecommend') || pageNameLower.includes('plant analysis')) actionTargetPage = 'plantRecommendation';
+                else if (pageNameLower.includes('plant analysis') || pageNameLower.includes('disease detection')) actionTargetPage = 'plantAnalysis'; // Updated
                 else if (pageNameLower.includes('agribot')) actionTargetPage = 'farmerChatbot';
                 else if (pageNameLower.includes('home') || pageNameLower.includes('landing')) actionTargetPage = 'landing';
                 if (actionTargetPage) { const requiredRole = this.getRoleForPage(actionTargetPage); if (requiredRole && requiredRole !== this.role) { isSwitchRoleAction = true; targetRole = requiredRole; actionLabel = `Switch to ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Role`; }}
@@ -3308,7 +3459,7 @@ methods: {
           this.avatar.quickActions = [];
     },
     getRoleForPage(page) {
-         if (page.startsWith('farmerPestiVid') || page.startsWith('farmerAgriStream') || page.startsWith('farmerSell') || page.startsWith('farmerFunding') || page === 'plantRecommendation' || page === 'farmerChatbot') return 'farmer';
+         if (page.startsWith('farmerPestiVid') || page.startsWith('farmerAgriStream') || page.startsWith('farmerSell') || page.startsWith('farmerFunding') || page === 'plantAnalysis' || page === 'farmerChatbot') return 'farmer'; // Updated
          if (page.startsWith('buyerAgriSell')) return 'buyer';
          if (page.startsWith('investorProjects') || page.startsWith('investorPortfolio')) return 'investor';
          if (page === 'userProfile' || page === 'messaging' || page === 'landing') return this.role;
@@ -3459,7 +3610,7 @@ methods: {
             case 'farmerAgriStream': context += "Farmer's AgriStream (uploaded videos)."; actions.push({ id: 'qa_create_listing_from_video', label: "Create Listing?", customHandler: () => {this.addAvatarMessage("You can create a listing for sale from any video here. Click 'Create Listing' on a video card.", "bot"); this.speakAvatarResponse("You can create a listing for sale from any video here. Click Create Listing on a video card.");} }); actions.push({ id: 'qa_upload_new_video', label: "Upload New Video", targetPage: 'farmerPestiVid'}); break;
              case 'farmerSell': context += "Farmer is on the page to create a new marketplace listing."; actions.push({ id: 'qa_select_video_for_listing', label: "How to list?", customHandler: () => {this.addAvatarMessage("Select an unlisted video from the dropdown, set your price range, and click 'Create Listing'.", "bot"); this.speakAvatarResponse("Select an unlisted video from the dropdown, set your price range, and click Create Listing.");} }); actions.push({ id: 'qa_view_marketplace', label: "View Marketplace", targetPage: 'buyerAgriSell'}); break;
             case 'farmerFunding': context += "Farmer is on the page to request funding for a project."; actions.push({ id: 'qa_how_to_request_funding', label: "How to request funding?", customHandler: () => {this.addAvatarMessage("Fill in project details, select a relevant video, and submit. Your request will be visible to investors.", "bot"); this.speakAvatarResponse("Fill in project details, select a relevant video, and submit. Your request will be visible to investors.");} }); actions.push({ id: 'qa_view_investor_projects', label: "See Investor View", targetPage: 'investorProjects'}); break;
-            case 'plantRecommendation': context += "Farmer is on the Plant Disease Detection & Recommendation page."; actions.push({ id: 'qa_how_plant_analysis_works', label: "How plant analysis works?", customHandler: () => {this.addAvatarMessage("Upload an image of an affected plant. The AI will try to identify it, detect diseases, and suggest treatments. This is simulated for the demo.", "bot");this.speakAvatarResponse("Upload an image of an affected plant. The AI will try to identify it, detect diseases, and suggest treatments. This is simulated for the demo.");} }); break;
+            case 'plantAnalysis': context += "Farmer is on the Plant Disease Detection page."; actions.push({ id: 'qa_how_plant_analysis_works', label: "How plant analysis works?", customHandler: () => {this.addAvatarMessage("Upload an image of an affected plant. The AI will try to identify it, detect diseases, and suggest treatments. This uses an external AI model.", "bot");this.speakAvatarResponse("Upload an image of an affected plant. The AI will try to identify it, detect diseases, and suggest treatments. This uses an external AI model.");} }); break; // Updated
             case 'farmerChatbot': context += "Farmer is using the AgriBot assistant."; actions.push({ id: 'qa_ask_about_pests', label: "Ask about pests", customHandler: () => {this.avatar.userInput = "How to control aphids on tomatoes?"; this.sendAvatarMessage();} }); break;
             case 'buyerAgriSell': context += "User (likely Buyer) is browsing the AgriSell marketplace."; actions.push({ id: 'qa_how_to_buy', label: "How to buy?", customHandler: () => {this.addAvatarMessage("Click 'Initiate Purchase' on a listing, enter your offer within the price range, and confirm. This is a simulation.", "bot"); this.speakAvatarResponse("Click Initiate Purchase on a listing, enter your offer within the price range, and confirm. This is a simulation.");} }); if (userRole !== 'buyer') actions.push({ id: 'qa_switch_to_buyer', label: "Switch to Buyer Role", customHandler: () => this.switchDemoRoleAndLogin('buyer') }); break;
             case 'investorProjects': context += "User (likely Investor) is browsing investment opportunities."; actions.push({ id: 'qa_how_to_invest', label: "How to invest?", customHandler: () => {this.addAvatarMessage("Enter your investment amount for a project and click 'Invest Now'. Returns are based on ROI and profit share. This is a simulation.", "bot");this.speakAvatarResponse("Enter your investment amount for a project and click Invest Now. Returns are based on ROI and profit share. This is a simulation.");} }); actions.push({ id: 'qa_view_my_portfolio', label: "My Portfolio", targetPage: 'investorPortfolio'}); if (userRole !== 'investor') actions.push({ id: 'qa_switch_to_investor', label: "Switch to Investor Role", customHandler: () => this.switchDemoRoleAndLogin('investor') }); break;
@@ -3483,7 +3634,7 @@ methods: {
     },
 
     // --- Data Loading ---
-    async loadDataFromDatabase() {
+    async loadDataFromDatabase() { // This method is illustrative of a backend integration
         if (!this.isAuthenticated) return;
 
         try {
@@ -3615,4 +3766,3 @@ methods: {
 });
 </script>
 </body>
-</html>
