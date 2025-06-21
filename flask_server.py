@@ -1,28 +1,28 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-from PIL import Image
-import io
 import torch
 from torch import nn
 from transformers import CLIPProcessor, CLIPModel, T5TokenizerFast, T5ForConditionalGeneration
+from PIL import Image
+import numpy as np
+from pathlib import Path
 import warnings
+from flask_cors import CORS
 
 # Ignore minor warnings
 warnings.filterwarnings("ignore")
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Device configuration
+# --- 1. SETUP AND CONFIGURATION ---
+print("--- Initializing Configuration ---")
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
-# Class and label definitions
 classes = ['Bacteria', 'Fungi', 'Healthy', 'Nematode', 'Pest', 'Phytopthora', 'Virus']
 label_map = dict(zip(classes, range(len(classes))))
 
-# Text prompts used for the CLIP model
 text_prompts = {
     "Bacteria": "a potato leaf infected with bacterial disease",
     "Fungi": "a potato leaf infected with fungal disease",
@@ -33,16 +33,14 @@ text_prompts = {
     "Virus": "a potato leaf infected with viral disease"
 }
 
-# IMPORTANT: Update these paths to where your models are stored locally
 CLIP_MODEL_PATH = "best_vlm_model.pth"
 T2T_MODEL_PATH = "best_t2t_recommendation_model.pth"
 T2T_BASE_MODEL_NAME = "google/flan-t5-small"
 
-# Model class definition
 class CLIPFineTuner(nn.Module):
     def __init__(self, num_classes, unfreeze_layers=0):
         super(CLIPFineTuner, self).__init__()
-        self.clip = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", trust_remote_code=True, use_safetensors=True)
+        self.clip = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
         for param in self.clip.parameters():
             param.requires_grad = False
         if unfreeze_layers > 0:
@@ -74,12 +72,8 @@ class CLIPFineTuner(nn.Module):
         logits = self.classifier(combined_features)
         return logits
 
-# Prediction function
-def get_clip_disease_prediction(clip_model, processor, image, device):
-    """
-    Predicts disease from a PIL image object.
-    """
-    image = image.convert("RGB")
+def get_clip_disease_prediction(clip_model, processor, image_path, device):
+    image = Image.open(image_path).convert("RGB")
     class_scores = {}
 
     clip_model.eval()
@@ -99,7 +93,8 @@ def get_clip_disease_prediction(clip_model, processor, image, device):
             class_idx = label_map[class_name]
             class_scores[class_name] = logits[0, class_idx].item()
 
-    scores_tensor = torch.tensor(list(class_scores.values()))
+    # Move scores_tensor to the same device (optional but cleaner)
+    scores_tensor = torch.tensor(list(class_scores.values()), device=device)
     probs = torch.softmax(scores_tensor, dim=0)
     all_probs = {name: prob.item() for name, prob in zip(class_scores.keys(), probs)}
 
@@ -108,11 +103,7 @@ def get_clip_disease_prediction(clip_model, processor, image, device):
 
     return predicted_class, confidence, all_probs
 
-# Recommendation function
 def get_t2t_recommendation(t2t_model, t2t_tokenizer, disease_name, device):
-    """
-    Generates treatment recommendation for a given disease name.
-    """
     input_text = f"Recommend treatment for potato disease: {disease_name}"
     t2t_model.eval()
     with torch.no_grad():
@@ -127,10 +118,8 @@ def get_t2t_recommendation(t2t_model, t2t_tokenizer, disease_name, device):
         recommendation = t2t_tokenizer.decode(generated_ids[0], skip_special_tokens=True)
     return recommendation
 
-# Load models
-print("\n--- Loading Models into Memory ---")
+print("\n--- Loading Models ---")
 
-# Load CLIP model
 try:
     clip_model_loaded = CLIPFineTuner(num_classes=len(classes), unfreeze_layers=2)
     checkpoint = torch.load(CLIP_MODEL_PATH, map_location=device)
@@ -142,10 +131,8 @@ try:
     CLIP_LOADED = True
 except FileNotFoundError:
     print(f"❌ ERROR: CLIP model file not found at '{CLIP_MODEL_PATH}'.")
-    print("❌ The CLIP prediction endpoint will not work.")
     CLIP_LOADED = False
 
-# Load T2T Recommendation model
 try:
     t2t_tokenizer = T5TokenizerFast.from_pretrained(T2T_BASE_MODEL_NAME)
     t2t_model_loaded = T5ForConditionalGeneration.from_pretrained(T2T_BASE_MODEL_NAME)
@@ -156,57 +143,45 @@ try:
     T2T_LOADED = True
 except FileNotFoundError:
     print(f"❌ ERROR: T2T model file not found at '{T2T_MODEL_PATH}'.")
-    print("❌ The recommendation endpoint will not work.")
     T2T_LOADED = False
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if not (CLIP_LOADED and T2T_LOADED):
-        return jsonify({'error': 'Models are not loaded, cannot process request.'}), 503
+    if not CLIP_LOADED or not T2T_LOADED:
+        return jsonify({'error': 'Models are not properly loaded.'}), 500
 
+    # Check if 'file' is in request.files (matching frontend key)
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected for uploading'}), 400
+        return jsonify({'error': 'No image provided.'}), 400
+
+    image_file = request.files['file']  # Changed from 'image' to 'file'
+    image_path = Path("temp_image.jpg")
+    image_file.save(image_path)
 
     try:
-        # Read the image in-memory
-        image_bytes = file.read()
-        image = Image.open(io.BytesIO(image_bytes))
-        
-        # Perform prediction
-        predicted_disease, confidence, _ = get_clip_disease_prediction(
+        predicted_disease, confidence, all_probs = get_clip_disease_prediction(
             clip_model=clip_model_loaded,
             processor=clip_processor,
-            image=image,
+            image_path=image_path,
             device=device
         )
-        
-        # Get recommendation
+
         recommendation = get_t2t_recommendation(
             t2t_model=t2t_model_loaded,
             t2t_tokenizer=t2t_tokenizer,
             disease_name=predicted_disease,
             device=device
         )
-        
-        # Format response
-        result = {
+
+        return jsonify({
             'predicted_disease': predicted_disease,
             'confidence': f"{confidence:.2%}",
             'recommendation': recommendation
-        }
-        print(result)
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error during prediction: {e}")
-        return jsonify({'error': f'An error occurred during prediction: {str(e)}'}), 500
+        })
 
-@app.route('/', methods=['GET'])
-def index():
-    return "<h1>Plant Analysis API</h1><p>Send a POST request to /predict with an image file to get a prediction.</p>"
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
+
