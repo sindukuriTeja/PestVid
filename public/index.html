@@ -1053,7 +1053,7 @@
                     <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-robot mr-2"></i>AgriBot - Your Farming Assistant</h2>
                     <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
                         <p class="font-bold">User: {{ currentUser ? currentUser.name : 'Farmer' }} (Role: Farmer)</p>
-                        <p class="text-sm">Chat with AgriBot about farming questions. AI responses are simulated.</p>
+                        <p class="text-sm">Chat with AgriBot about farming questions. AI responses are powered by a live backend.</p>
                     </div>
                     <div class="bg-white rounded shadow-md chatbot-container">
                         <div class="chatbot-messages" ref="chatbotMessagesContainer">
@@ -1345,7 +1345,8 @@ const app = new Vue({
 el: "#app",
 data: {
   // --- Backend API Configuration ---
-  apiUrl: 'http://localhost:3001/api', // Ensure this matches your backend server
+  apiUrl: 'http://localhost:3001/api', // Main Node.js backend
+  flaskApiUrl: 'http://localhost:5000', // Python (Flask) AI backend
   token: null,
 
   // --- Authentication State ---
@@ -1397,7 +1398,7 @@ data: {
   // Get your JWT from https://app.pinata.cloud/keys
   // Video uploads WILL FAIL if this is not your valid JWT.
   // ========================================================================
-  pinataJwt: 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE', // <<<<< REPLACE THIS!
+  pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwMGYyMjQxNy01ZDhjLTQ4YzgtODQwNi0zNTBlOTZkOGMwZTgiLCJlbWFpbCI6InNpbmR1a3VyaW1lZ2hhbmFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6ImJlNzJjZTMwNDk5YTNmNWNkZDcxIiwic2NvcGVkS2V5U2VjcmV0IjoiYTE2YjJiZDE4ZjgyNmFiZmY2MGE0Mzk5Nzk2NTZkNzMzYjY5MDJlM2U0Y2JlOTcxNTJiYTVkMTM3ZTZkMTlmYiIsImV4cCI6MTc4MTQ1MjUzNX0.o-PFoSsBVlhUdgf74ZF5ynVDtODGP0IPiknDrE33h5g', // <<<<< REPLACE THIS!
   pinataGateway: 'gateway.pinata.cloud', // Using public Pinata gateway for better compatibility
 
   // --- Messaging State ---
@@ -3336,7 +3337,7 @@ methods: {
         }
     },
 
-    // --- Farmer Chatbot (AgriBot - AI Simulated) ---
+    // --- Farmer Chatbot (AgriBot - AI Integrated) ---
     renderMarkdown(text) { if (window.marked) return marked.parse(text || ''); return text || ''; },
     initializeChatbot() {
         if (this.current === 'farmerChatbot' && this.isAuthenticated && this.role === 'farmer') {
@@ -3344,7 +3345,7 @@ methods: {
             if (storedAgriBotChat) {
                 this.chatMessages = JSON.parse(storedAgriBotChat);
             } else if (this.chatMessages.length === 0) {
-                this.chatMessages.push({ _id: this.generateId('bot_init_'), sender: 'bot', text: "Hello! I'm AgriBot. Ask about tomato blight or strawberry planting.", timestamp: new Date().toISOString() });
+                this.chatMessages.push({ _id: this.generateId('bot_init_'), sender: 'bot', text: "Hello! I'm AgriBot, your AI farming assistant. How can I help you today?", timestamp: new Date().toISOString() });
             }
         } else if (this.current === 'farmerChatbot' && (!this.isAuthenticated || this.role !== 'farmer')) {
             this.chatMessages = [{ _id: this.generateId('bot_access_'), sender: 'bot', text: "Please log in as a Farmer to use AgriBot." }];
@@ -3353,24 +3354,51 @@ methods: {
     },
     async sendChatMessage() {
         if (!this.chatInput.trim() || this.isGroqLoading || !this.isAuthenticated || this.role !== 'farmer') return;
+        
         const userMessageText = this.chatInput.trim();
         this.chatMessages.push({ _id: this.generateId('user_'), sender: 'user', text: userMessageText, timestamp: new Date().toISOString() });
         this.chatInput = '';
         this.$nextTick(() => this.scrollToChatBottom());
 
         this.isGroqLoading = true;
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-        let botResponse = "I'm sorry, I can only provide simulated responses in this demo. ";
-        if (userMessageText.toLowerCase().includes("tomato blight")) botResponse = "For tomato blight, ensure good air circulation, water at the base of plants, and consider using copper-based fungicides preventatively. Remove and destroy infected plant parts.";
-        else if (userMessageText.toLowerCase().includes("strawberry planting")) botResponse = "Plant strawberries in well-drained soil with plenty of organic matter. Space them about 12-18 inches apart. Ensure they get full sun.";
-        else if (userMessageText.toLowerCase().includes("hello") || userMessageText.toLowerCase().includes("hi")) botResponse = "Hello there! How can I help you with your farming questions today?";
-        else botResponse += `You asked about: "${userMessageText}". For real advice, integrate with a live AI.`;
 
-        this.chatMessages.push({ _id: this.generateId('bot_'), sender: 'bot', text: botResponse, timestamp: new Date().toISOString() });
-        if (this.isAuthenticated && this.currentUserIdentifier) {
-            localStorage.setItem(`pestivid_agribot_chat_${this.currentUserIdentifier}`, JSON.stringify(this.chatMessages));
+        try {
+            // Make a POST request to your Flask backend
+            const response = await axios.post(`${this.flaskApiUrl}/chat`, {
+                question: userMessageText 
+            });
+
+            // The response.data should be: { question: "...", answer: "..." }
+            const botResponse = response.data.answer;
+
+            this.chatMessages.push({ _id: this.generateId('bot_'), sender: 'bot', text: botResponse, timestamp: new Date().toISOString() });
+
+        } catch (error) {
+            console.error("Error communicating with the AgriBot backend:", error);
+            let errorMessage = "I'm having trouble connecting to my brain right now. Please try again in a moment.";
+            if (error.code === "ERR_NETWORK") {
+                errorMessage += " (Is the AI server running?)";
+            } else if (error.response) {
+                errorMessage += ` (Error: ${error.response.status})`;
+            }
+            
+            // Add an error message to the chat interface for the user
+            this.chatMessages.push({ _id: this.generateId('bot_err_'), sender: 'bot', text: errorMessage, timestamp: new Date().toISOString() });
+            
+            // Also add a system notification
+            this.addNotification("Could not get response from AgriBot.", "error");
+
+        } finally {
+            // This block will run whether the API call succeeded or failed
+            this.isGroqLoading = false;
+            
+            // Save chat history to localStorage
+            if (this.isAuthenticated && this.currentUserIdentifier) {
+                localStorage.setItem(`pestivid_agribot_chat_${this.currentUserIdentifier}`, JSON.stringify(this.chatMessages));
+            }
+
+            this.$nextTick(() => this.scrollToChatBottom());
         }
-        this.isGroqLoading = false; this.$nextTick(() => this.scrollToChatBottom());
     },
     scrollToChatBottom() { const container = this.$refs.chatbotMessagesContainer; if (container) setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50); },
 
@@ -3766,3 +3794,4 @@ methods: {
 });
 </script>
 </body>
+</html>
