@@ -1,0 +1,34 @@
+{
+  "name": "pestivid-avalanche",
+  "version": "1.0.0",
+  "description": "PestiVid Agricultural dApp on Avalanche blockchain",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy:fuji": "hardhat run scripts/deploy.js --network fuji",
+    "deploy:avalanche": "hardhat run scripts/deploy.js --network avalanche",
+    "test": "hardhat test",
+    "node": "hardhat node"
+  },
+  "keywords": [
+    "avalanche",
+    "blockchain",
+    "agriculture",
+    "dapp",
+    "smart-contracts"
+  ],
+  "author": "PestiVid Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "hardhat": "^2.12.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "ethers": "^5.4.7"
+  }
+}

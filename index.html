@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PestiVid - Farmer Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" rel="stylesheet">
+  <!-- Google Fonts (Inter) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Vue.js & Other Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Web3.js for Avalanche blockchain interaction -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+  <!-- Blockchain Service -->
+  <script src="js/blockchain.js"></script>
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+    .progress-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .modal-scrollable { max-height: 85vh; overflow-y: auto; }
+    .project-updates-list { max-height: 150px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem; background-color: #f9fafb; }
+    .notification-toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column-reverse; gap: 10px; align-items: flex-end; }
+    .notification-toast { min-width: 250px; max-width: 350px; background-color: #fff; color: #333; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); display: flex; align-items: center; opacity: 0; transform: translateX(100%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+    .notification-toast.show { opacity: 1; transform: translateX(0); }
+    .notification-toast .icon { margin-right: 0.75rem; font-size: 1.25rem; }
+    .notification-toast .icon-info { color: #3b82f6; } .notification-toast .icon-success { color: #10b981; } .notification-toast .icon-warning { color: #f59e0b; } .notification-toast .icon-error { color: #ef4444; }
+    .notification-toast .close-btn { margin-left: auto; color: #9ca3af; cursor: pointer; background: none; border: none; font-size: 1rem; }
+    .loading-modal { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    .loading-content { background-color: white; padding: 2rem; border-radius: 0.5rem; text-align: center; }
+    .loading-content .fa-spinner { font-size: 2rem; color: #10b981; margin-bottom: 1rem; }
+    .chatbot-container { display: flex; flex-direction: column; height: calc(100vh - 230px); max-height: 700px; border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; }
+    .chatbot-messages { flex-grow: 1; padding: 1rem; overflow-y: auto; background-color: #f9fafb; }
+    .chat-message { display: flex; max-width: 80%; margin-bottom: 0.5rem;}
+    .chat-message.user { margin-left: auto; flex-direction: row-reverse; }
+    .chat-message .message-bubble { padding: 0.75rem 1rem; border-radius: 1rem; line-height: 1.5; word-wrap: break-word; }
+    .chat-message.user .message-bubble { background-color: #10b981; color: white; }
+    .chat-message.bot .message-bubble { background-color: #e5e7eb; color: #1f2937; }
+    .chatbot-input-area { border-top: 1px solid #e5e7eb; padding: 1rem; background-color: #fff; display: flex; gap: 0.75rem; }
+    .protocol-step { border-left: 3px solid #10b981; padding-left: 1rem; margin-bottom: 1rem; }
+
+    /* Clean Landing Page Styles */
+    .feature-card {
+      transition: box-shadow 0.2s ease;
+    }
+  </style>
+</head>
+<body class="text-gray-900">
+<div id="app" class="flex flex-col min-h-screen">
+  <!-- Header/Navbar -->
+  <header class="bg-white shadow sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl text-green-700 font-semibold"><i class="fas fa-seedling mr-1"></i>PestiVid</span>
+      </div>
+      <nav class="hidden md:flex space-x-5 items-center">
+        <a href="#" @click.prevent="switchPage('landing')" :class="{'font-bold text-green-700': current==='landing'}" class="hover:text-green-600">Home</a>
+        <a href="#" @click.prevent="directAccess('farmerPestiVid')" :class="{'font-bold text-green-700': current==='farmerPestiVid'}" class="hover:text-green-600">Dashboard</a>
+        <a href="#" @click.prevent="switchPage('farmerAgriStream')" :class="{'font-bold text-green-700': current==='farmerAgriStream'}" class="hover:text-green-600">AgriStream</a>
+        <a href="#" @click.prevent="directAccess('farmerProfile')" :class="{'font-bold text-green-700': current==='farmerProfile'}" class="hover:text-green-600">Profile</a>
+
+      </nav>
+
+      <!-- User Authentication -->
+      <div class="hidden md:flex items-center space-x-4">
+        <!-- Logged In User -->
+        <div v-if="isLoggedIn" class="flex items-center space-x-4">
+          <!-- User Info -->
+          <div class="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
+            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-bold">{{ currentUser.firstName.charAt(0) }}{{ currentUser.lastName.charAt(0) }}</span>
+            </div>
+            <div class="text-sm">
+              <div class="text-green-700 font-medium">{{ displayedUserIdentifier }}</div>
+              <div class="text-green-600 text-xs">{{ currentUser.area }}, {{ currentUser.state }}</div>
+            </div>
+          </div>
+
+          <!-- Logout Button -->
+          <button @click="logout" class="text-gray-600 hover:text-red-600 transition-colors">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+
+        <!-- Not Logged In -->
+        <div v-else class="flex items-center space-x-2">
+          <button @click="showLoginModal = true" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </button>
+          <button @click="showRegisterModal = true" class="border border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-user-plus mr-2"></i>Register
+          </button>
+        </div>
+      </div>
+
+      <button class="md:hidden text-gray-500 focus:outline-none" @click="showMobileMenu = !showMobileMenu">
+        <i class="fas fa-bars text-2xl"></i>
+      </button>
+    </div>
+    <!-- Mobile Dropdown -->
+    <div v-show="showMobileMenu" class="md:hidden bg-white border-t z-40">
+      <div class="py-2 flex flex-col space-y-1 px-4">
+        <a href="#" @click.prevent="switchPage('landing');showMobileMenu=false" :class="{'font-bold text-green-700': current==='landing'}">Home</a>
+        <a href="#" @click.prevent="directAccess('farmerPestiVid');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerPestiVid'}">Dashboard</a>
+        <a href="#" @click.prevent="switchPage('farmerAgriStream');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerAgriStream'}">AgriStream</a>
+        <a href="#" @click.prevent="directAccess('farmerProfile');showMobileMenu=false" :class="{'font-bold text-green-700': current==='farmerProfile'}">Profile</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 pt-8 pb-8">
+    
+    <!-- Landing Section -->
+    <section v-if="current==='landing'">
+        <!-- Hero Section -->
+        <div class="flex flex-col lg:flex-row items-center mb-20 pt-8">
+            <!-- Left Content -->
+            <div class="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0">
+                <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                    Welcome to <span class="text-green-600">PestiVid</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                    A secure, video-verified platform for modern farmers. Document your practices,
+                    connect with buyers, and access AI-powered agricultural insights.
+                </p>
+
+                <!-- Key Benefits -->
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-4"></div>
+                        <span class="text-gray-700">Blockchain-verified farming practices</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-4"></div>
+                        <span class="text-gray-700">Decentralized video storage on IPFS</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-4"></div>
+                        <span class="text-gray-700">AI-powered crop disease detection</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-4"></div>
+                        <span class="text-gray-700">Global farming community</span>
+                    </div>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button @click="getStarted"
+                            class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+                        Get Started
+                    </button>
+                    <button @click="switchPage('farmerAgriStream')"
+                            class="border border-gray-300 hover:border-green-500 text-gray-700 hover:text-green-600 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+                        Watch AgriStream
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Content - Video -->
+            <div class="lg:w-1/2">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <video controls playsinline webkit-playsinline class="w-full rounded-lg">
+                        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="mt-4 text-center">
+                        <p class="text-sm text-gray-500">Watch how PestiVid works</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Platform Features</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Everything you need to document, verify, and share your agricultural practices
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-video text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Video Documentation</h3>
+                    <p class="text-gray-600">
+                        Record and store your farming practices securely on decentralized storage.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-shield-check text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Blockchain Verification</h3>
+                    <p class="text-gray-600">
+                        Immutable proof of your agricultural practices for certification and insurance.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-users text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Community Network</h3>
+                    <p class="text-gray-600">
+                        Connect with farmers worldwide and share knowledge through AgriStream.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-robot text-yellow-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">AI Assistance</h3>
+                    <p class="text-gray-600">
+                        Get intelligent insights for crop disease detection and farming advice.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-handshake text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Marketplace</h3>
+                    <p class="text-gray-600">
+                        List your produce with video proof and connect directly with buyers.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-teal-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Analytics</h3>
+                    <p class="text-gray-600">
+                        Track your farming progress and get insights from your documented practices.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="bg-gray-50 rounded-lg p-8 mb-16">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-2xl font-bold text-green-600 mb-2">{{ getTotalVideosCount() }}+</div>
+                    <div class="text-sm text-gray-600">Videos Shared</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-blue-600 mb-2">{{ allFarmersVideos.filter(v => v.farmerWallet !== currentUserIdentifier).length }}+</div>
+                    <div class="text-sm text-gray-600">Active Farmers</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-purple-600 mb-2">100%</div>
+                    <div class="text-sm text-gray-600">Secure Storage</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-yellow-600 mb-2">24/7</div>
+                    <div class="text-sm text-gray-600">AI Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- All Farmer Sections are conditionally rendered below based on `current` page state -->
+    
+    <!-- Farmer Dashboard / PestiVid Section -->
+    <section v-if="current==='farmerPestiVid'" class="max-w-3xl mx-auto mt-6">
+      <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-video mr-2"></i>Dashboard: Record New Video</h2>
+
+      <!-- Storage Status -->
+      <div class="mb-6">
+        <div v-if="useBlockchain && isBlockchainConnected" class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-link text-green-500 mr-2"></i>
+              <span class="text-green-700 font-medium">Blockchain Storage Active</span>
+            </div>
+            <div class="text-sm text-green-600">
+              🎥 Videos → IPFS | 📊 Metadata → Avalanche
+            </div>
+          </div>
+        </div>
+        <div v-else-if="useBlockchain && !isBlockchainConnected" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+              <span class="text-yellow-700 font-medium">Local Storage Mode</span>
+            </div>
+            <div class="text-sm text-yellow-600">
+              💾 Data stored locally (connect wallet for blockchain)
+            </div>
+          </div>
+        </div>
+        <div v-else class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+            <span class="text-blue-700">Record videos of your farming practices to build trust and document your methods.</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4 text-sm text-yellow-700" v-if="recordForm._crpContext">
+        <strong>Documenting Climate Resilient Practice:</strong> {{ recordForm._crpContext.crpName }}. <br> {{ recordForm._crpContext.videoPrompt }}
+      </div>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4 text-sm text-yellow-700" v-if="recordForm._inputAppContext">
+        <strong>Documenting Input Application:</strong> {{ recordForm._inputAppContext.inputDetailsIfAuthentic.name }}. <br> Show packaging and application.
+      </div>
+       <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4 text-sm text-yellow-700" v-if="recordForm._protocolContext">
+        <strong>Documenting Protocol Step:</strong> {{ recordForm._protocolContext.protocolName }} - Step: {{ recordForm._protocolContext.stepName }}. <br> {{ recordForm._protocolContext.stepPrompt }}
+      </div>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4 text-sm text-yellow-700" v-if="recordForm._agriWasteContext">
+        <strong>Documenting Agri-Waste:</strong> Type: {{ recordForm._agriWasteContext.wasteType }}. <br> Show quantity and condition clearly.
+      </div>
+       <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4 text-sm text-yellow-700" v-if="recordForm._skillContext">
+        <strong>Demonstrating Skill:</strong> {{ recordForm._skillContext.skillName }}. <br> Perform the task as shown in the tutorial.
+      </div>
+      <div class="bg-white rounded shadow-md p-6 space-y-6">
+        <form @submit.prevent>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div> <label class="block text-gray-600 mb-1 text-sm">Crop Type / Context</label> <input v-model="recordForm.crop" class="w-full px-2 py-2 border rounded text-sm" required placeholder="e.g., Tomatoes / Plot A"> </div>
+            <div> <label class="block text-gray-600 mb-1 text-sm">Field Location / Batch ID</label> <input v-model="recordForm.location" class="w-full px-2 py-2 border rounded text-sm" required placeholder="e.g., South Field / Batch B001"> </div>
+            <div> <label class="block text-gray-600 mb-1 text-sm">Pesticide / Input Used</label> <input v-model="recordForm.pesticide" class="w-full px-2 py-2 border rounded text-sm" placeholder="e.g., Neem Oil / NPK"> </div>
+            <div> <label class="block text-gray-600 mb-1 text-sm">Pesticide / Input Co.</label> <input v-model="recordForm.pesticideCompany" class="w-full px-2 py-2 border rounded text-sm" placeholder="e.g., AgriChem"> </div>
+          </div>
+          <div class="mb-4">
+            <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 flex-wrap">
+                <label class="hidden"> <input type="radio" v-model="recordForm.purpose" value="climate_resilience"> </label>
+                <label class="hidden"> <input type="radio" v-model="recordForm.purpose" value="input_application"> </label>
+                <label class="hidden"> <input type="radio" v-model="recordForm.purpose" value="protocol_step"> </label>
+                <label class="hidden"> <input type="radio" v-model="recordForm.purpose" value="agri_waste"> </label>
+                <label class="hidden"> <input type="radio" v-model="recordForm.purpose" value="skill_demonstration"> </label>
+            </div>
+          </div>
+        </form>
+        <div>
+          <div class="aspect-w-16 aspect-h-9 bg-black rounded mb-3 relative" style="min-height:200px">
+            <video ref="liveVideo" v-show="showLive" class="w-full h-full rounded absolute inset-0 object-cover" autoplay muted playsinline></video>
+            <video v-if="recordBlobUrl" :src="recordBlobUrl" controls playsinline class="w-full h-full rounded absolute inset-0 object-cover"></video>
+            <div v-if="!showLive && !recordBlobUrl" class="absolute inset-0 flex justify-center items-center h-full text-gray-400"><i class="fas fa-video-slash fa-2x"></i></div>
+          </div>
+          <div class="flex flex-wrap gap-3 mb-2 items-center">
+            <button type="button" :disabled="recording" @click="startVideo" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+              <i :class="recording ? 'fas fa-spinner fa-spin' : (recordBlobUrl ? 'fas fa-redo' : 'fas fa-record-vinyl')" class="mr-1"></i>
+              {{ recordBlobUrl ? 'Re-Record' : (recording ? 'Starting...' : 'Start Recording') }}
+            </button>
+            <button v-if="recording" type="button" @click="stopVideo" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"> <i class="fas fa-stop mr-1"></i>Stop </button>
+            <button v-if="recordBlobUrl && !uploading" type="button" @click="uploadVideo" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"> <i class="fas fa-upload mr-1"></i>Upload Video </button>
+            <div v-if="uploading && !showLoadingModal" class="flex items-center text-blue-600 text-sm ml-3"> <i class="fas fa-spinner fa-spin mr-2"></i> Uploading...</div>
+          </div>
+          <div v-if="uploadCid" class="text-green-600 mt-3 bg-green-50 p-3 rounded border border-green-200 text-sm">
+              <div class="flex items-center mb-2"> <i class="fas fa-check-circle mr-2"></i> Uploaded! CID: <span class="font-mono bg-green-100 px-1 py-0.5 rounded break-all ml-1">{{ uploadCid }}</span> </div>
+              <p v-if="lastUploadedVideoPurpose === 'sell'" class="mt-1 text-gray-700"> <a href="#" @click.prevent="navigateToPageWithParam('farmerSell', 'cid', uploadCid)" class="text-green-700 underline font-medium hover:text-green-800">Click here to complete the listing</a>. </p>
+              <p v-if="lastUploadedVideoPurpose === 'funding'" class="mt-1 text-gray-700"> <a href="#" @click.prevent="navigateToPageWithParam('farmerFunding', 'cid', uploadCid)" class="text-purple-700 underline font-medium hover:text-purple-800">Click here to complete the funding request</a>. </p>
+          </div>
+          <div v-if="uploadError" class="text-red-600 mt-3 bg-red-50 p-2 rounded border border-red-200 text-sm"> <i class="fas fa-exclamation-triangle mr-1"></i> {{ uploadError }} </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AgriStream Section - All Farmers' Videos -->
+    <section v-if="current==='farmerAgriStream'" class="max-w-6xl mx-auto mt-6">
+      <h2 class="text-2xl font-bold text-green-700 mb-6"><i class="fas fa-stream mr-2"></i>AgriStream - Community Videos</h2>
+      <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-6">
+        <p class="text-blue-700"><i class="fas fa-info-circle mr-2"></i>Watch videos from farmers around the world sharing their agricultural practices, techniques, and experiences.</p>
+      </div>
+
+      <!-- Filter and Search -->
+      <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div class="flex flex-col md:flex-row gap-4 items-center">
+          <div class="flex-1">
+            <input v-model="agriStreamFilter.search" placeholder="Search by crop, location, or farmer..."
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+          </div>
+          <div>
+            <select v-model="agriStreamFilter.purpose" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="">All Categories</option>
+              <option value="agristream">General Practice</option>
+              <option value="sell">Produce Showcase</option>
+              <option value="funding">Funding Request</option>
+              <option value="climate_resilience">Climate Resilience</option>
+              <option value="input_application">Input Application</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Videos Grid -->
+      <div v-if="filteredAgriStreamVideos.length === 0" class="text-center py-12">
+        <i class="fas fa-video-slash text-gray-400 text-4xl mb-4"></i>
+        <p class="text-gray-500">No videos found matching your criteria.</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="video in filteredAgriStreamVideos" :key="video.cid"
+             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+             :class="{'ring-2 ring-green-500': highlightedAgriStreamVideoCid === video.cid}">
+
+          <!-- Video Player -->
+          <div class="aspect-w-16 aspect-h-9 bg-black relative">
+            <video controls playsinline preload="metadata"
+                   class="w-full h-48 object-cover"
+                   @loadstart="onVideoLoadStart(video.cid)"
+                   @loadeddata="onVideoLoaded(video.cid)"
+                   @error="onVideoError(video.cid)"
+                   @canplay="onVideoCanPlay(video.cid)">
+              <!-- Multiple sources for better compatibility -->
+              <source v-for="url in getAlternativeIpfsUrls(video.cid)"
+                      :key="url"
+                      :src="url"
+                      :type="getVideoType(url)">
+              Your browser does not support the video tag.
+            </video>
+
+            <!-- Loading indicator -->
+            <div v-if="video.loading" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div class="text-center text-white">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <p class="text-sm">Loading from IPFS...</p>
+              </div>
+            </div>
+
+            <!-- Error state -->
+            <div v-if="video.error" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+              <div class="text-center text-white">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <p class="text-sm">Failed to load video</p>
+                <button @click="retryVideoLoad(video.cid)" class="mt-2 px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs">
+                  <i class="fas fa-redo mr-1"></i>Retry
+                </button>
+              </div>
+            </div>
+
+            <!-- IPFS indicator -->
+            <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+              <i class="fas fa-cloud mr-1"></i>IPFS
+            </div>
+          </div>
+
+          <!-- Video Info -->
+          <div class="p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-lg text-gray-800">{{ video.crop }}</h3>
+              <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                {{ formatPurpose(video.purpose) }}
+              </span>
+            </div>
+
+            <div class="space-y-1 text-sm text-gray-600 mb-3">
+              <p><i class="fas fa-map-marker-alt mr-1"></i>{{ video.location }}</p>
+              <p v-if="video.pesticide"><i class="fas fa-flask mr-1"></i>{{ video.pesticide }}</p>
+              <p><i class="fas fa-user mr-1"></i>{{ video.farmerName || 'Anonymous Farmer' }}</p>
+              <p><i class="fas fa-clock mr-1"></i>{{ formatDate(video.uploadTimestamp) }}</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+              <button @click="likeVideo(video.cid)"
+                      class="flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                      :class="{'bg-red-100 text-red-600': video.liked}">
+                <i :class="video.liked ? 'fas fa-heart' : 'far fa-heart'"></i>
+                {{ video.likes || 0 }}
+              </button>
+              <button @click="shareVideo(video)"
+                      class="flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors">
+                <i class="fas fa-share"></i>
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile Section - Current User's Videos -->
+    <section v-if="current==='farmerProfile'" class="max-w-4xl mx-auto mt-6">
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex items-center space-x-4 mb-6">
+          <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-white text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">{{ userName }}</h2>
+            <p class="text-gray-600">{{ currentUserIdentifier }}</p>
+            <p class="text-sm text-gray-500">Member since {{ formatDate(userJoinDate) }}</p>
+          </div>
+        </div>
+
+        <!-- Profile Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="text-center p-3 bg-green-50 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">{{ farmerVideos.length }}</div>
+            <div class="text-sm text-gray-600">Videos Uploaded</div>
+          </div>
+          <div class="text-center p-3 bg-blue-50 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600">{{ farmerListings.length }}</div>
+            <div class="text-sm text-gray-600">Active Listings</div>
+          </div>
+          <div class="text-center p-3 bg-purple-50 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">{{ farmerFundingRequests.length }}</div>
+            <div class="text-sm text-gray-600">Funding Requests</div>
+          </div>
+          <div class="text-center p-3 bg-yellow-50 rounded-lg">
+            <div class="text-2xl font-bold text-yellow-600">{{ getTotalVideoLikes() }}</div>
+            <div class="text-sm text-gray-600">Total Likes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User's Videos -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-video mr-2"></i>My Videos</h3>
+
+        <div v-if="farmerVideos.length === 0" class="text-center py-8">
+          <i class="fas fa-video-slash text-gray-400 text-3xl mb-3"></i>
+          <p class="text-gray-500 mb-4">You haven't uploaded any videos yet.</p>
+          <button @click="switchPage('farmerPestiVid')"
+                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+            <i class="fas fa-plus mr-2"></i>Upload Your First Video
+          </button>
+        </div>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-for="video in farmerVideos" :key="video.cid"
+               class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+
+            <!-- Video Thumbnail/Player -->
+            <div class="aspect-w-16 aspect-h-9 bg-black relative">
+              <video controls playsinline preload="metadata" class="w-full h-32 object-cover">
+                <source v-for="url in getAlternativeIpfsUrls(video.cid)"
+                        :key="url"
+                        :src="url"
+                        :type="getVideoType(url)">
+                Your browser does not support the video tag.
+              </video>
+
+              <!-- IPFS indicator -->
+              <div class="absolute top-1 right-1 bg-black bg-opacity-50 text-white px-1 py-0.5 rounded text-xs">
+                <i class="fas fa-cloud"></i>
+              </div>
+            </div>
+
+            <!-- Video Details -->
+            <div class="p-3">
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-gray-800">{{ video.crop }}</h4>
+                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                  {{ formatPurpose(video.purpose) }}
+                </span>
+              </div>
+
+              <div class="text-sm text-gray-600 space-y-1 mb-3">
+                <p><i class="fas fa-map-marker-alt mr-1"></i>{{ video.location }}</p>
+                <p v-if="video.pesticide"><i class="fas fa-flask mr-1"></i>{{ video.pesticide }}</p>
+                <p><i class="fas fa-clock mr-1"></i>{{ formatDate(video.uploadTimestamp) }}</p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-2 text-sm">
+                <button @click="shareVideo(video)"
+                        class="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors">
+                  <i class="fas fa-share"></i>
+                  Share
+                </button>
+                <button @click="deleteVideo(video.cid)"
+                        class="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors">
+                  <i class="fas fa-trash"></i>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ... (All other sections and modals will be here) ... -->
+
+    <!-- Notification Toast Container -->
+    <div class="notification-toast-container">
+        <div v-for="n in recentNotifications" :key="n.id" class="notification-toast" :class="{'show': n.show}">
+            <span :class="['icon', 'icon-' + n.type]"> <i :class="n.type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle'"></i> </span>
+            <span class="message">{{ n.message }}</span>
+            <button @click="dismissNotification(n.id)" class="close-btn">×</button>
+        </div>
+    </div>
+    <!-- Loading/Transaction Modal -->
+    <div v-if="showLoadingModal" class="loading-modal">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p class="text-gray-700">{{ loadingMessage }}</p>
+        </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t py-6 mt-auto text-center text-sm text-gray-500">
+    <span>© {{ new Date().getFullYear() }} PestiVid • Agricultural Platform</span>
+  </footer>
+
+  <!-- Login Modal -->
+  <div v-if="showLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showLoginModal = false">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Login to PestiVid</h2>
+        <button @click="showLoginModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <form @submit.prevent="login">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input v-model="loginForm.email" type="email" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your email">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input v-model="loginForm.password" type="password" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your password">
+          </div>
+
+          <div v-if="authError" class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+            {{ authError }}
+          </div>
+
+          <button type="submit" :disabled="authLoading"
+                  class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+            <i v-if="authLoading" class="fas fa-spinner fa-spin mr-2"></i>
+            <i v-else class="fas fa-sign-in-alt mr-2"></i>
+            {{ authLoading ? 'Logging in...' : 'Login' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-gray-600">Don't have an account?</p>
+        <button @click="showLoginModal = false; showRegisterModal = true" class="text-green-600 hover:text-green-700 font-medium">
+          Create Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Modal -->
+  <div v-if="showRegisterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showRegisterModal = false">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 max-h-screen overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Join PestiVid Community</h2>
+        <button @click="showRegisterModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <form @submit.prevent="register">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Personal Information -->
+          <div class="md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Personal Information</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+            <input v-model="registerForm.firstName" type="text" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your first name">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+            <input v-model="registerForm.lastName" type="text" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your last name">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+            <input v-model="registerForm.email" type="email" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your email address">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+            <input v-model="registerForm.phoneNumber" type="tel" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your phone number">
+          </div>
+
+          <!-- Location Information -->
+          <div class="md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2 mt-4">Location Information</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+            <select v-model="registerForm.country" @change="onCountryChange" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              <option value="">Select Country</option>
+              <option v-for="country in countries" :key="country.code" :value="country.code">
+                {{ country.name }}
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">State/Province *</label>
+            <select v-model="registerForm.state" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    :disabled="!registerForm.country">
+              <option value="">{{ registerForm.country ? 'Select State/Province' : 'Select Country First' }}</option>
+              <option v-for="state in states" :key="state.code" :value="state.code">
+                {{ state.name }}
+              </option>
+            </select>
+            <!-- Debug info -->
+            <div v-if="registerForm.country" class="text-xs text-gray-500 mt-1">
+              Country: {{ registerForm.country }} | States available: {{ states.length }}
+              <button @click="loadStates" type="button" class="ml-2 text-blue-500 underline">Reload States</button>
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Area/District *</label>
+            <input v-model="registerForm.area" type="text" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Enter your area or district">
+          </div>
+
+          <!-- Security -->
+          <div class="md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2 mt-4">Security</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+            <input v-model="registerForm.password" type="password" required minlength="6"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Create a password (min 6 characters)">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+            <input v-model="registerForm.confirmPassword" type="password" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                   placeholder="Confirm your password">
+          </div>
+
+          <div v-if="authError" class="md:col-span-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+            {{ authError }}
+          </div>
+
+          <div class="md:col-span-2">
+            <button type="submit" :disabled="authLoading"
+                    class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+              <i v-if="authLoading" class="fas fa-spinner fa-spin mr-2"></i>
+              <i v-else class="fas fa-user-plus mr-2"></i>
+              {{ authLoading ? 'Creating Account...' : 'Create Account' }}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-gray-600">Already have an account?</p>
+        <button @click="showRegisterModal = false; showLoginModal = true" class="text-green-600 hover:text-green-700 font-medium">
+          Login Here
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================================================================================
+// PESTIVID FARMER PORTAL - VUE.JS APPLICATION
+// ===================================================================================
+const app = new Vue({
+  el: "#app",
+  data: {
+    // -----------------------------------------------------------------------------
+    // CRITICAL: API KEYS & CONFIGURATION - REPLACE THESE VALUES
+    // -----------------------------------------------------------------------------
+    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJiY2Q2N2EzMC1lYmVmLTRiMWYtYjZmMi02OTI1ZGM2OWUzZDUiLCJlbWFpbCI6InRlamFzaW5kdWt1cmk1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI4OTY1ODM2MDlhMzE4YjY1N2QzMSIsInNjb3BlZEtleVNlY3JldCI6ImFkNWQ2OTc5NDkwNmFjODAzOGYxOGExNmYwMmIwOTc2NjlhNjQwNDY3MDExODdiZWRmOTdjMmZiMTA2NzdiNmYiLCJleHAiOjE3NzYwOTU3OTF9.dbyd6dnaASvYze1j5zVmPkoiDuQhA3PBczy0LxsRO-U',
+    pinataGateway: 'gray-holy-tarantula-205.mypinata.cloud',
+    geminiApiKey: 'YOUR_GEMINI_API_KEY_HERE',
+    groqApiKey: "YOUR_GROQ_API_KEY_REPLACE_ME",
+
+    // Blockchain Configuration
+    contractAddress: null,
+    contractABI: null,
+    blockchainService: null,
+    web3: null,
+
+    // Core App State
+    current: 'landing',
+    showMobileMenu: false,
+
+    // User Authentication State
+    currentUser: null,
+    isLoggedIn: false,
+    showLoginModal: false,
+    showRegisterModal: false,
+
+    // Login Form
+    loginForm: {
+      email: '',
+      password: ''
+    },
+
+    // Registration Form
+    registerForm: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      country: '',
+      state: '',
+      area: '',
+      password: '',
+      confirmPassword: ''
+    },
+
+    // Blockchain State
+    currentUserAddress: null,
+    isBlockchainConnected: false,
+    useBlockchain: true,
+
+    // Countries and States data
+    countries: [],
+    states: [],
+
+    // Authentication
+    authError: '',
+    authLoading: false,
+    
+    // PestiVid Video Recording & Upload
+    recordForm: {crop:'', pesticide:'', location:'', pesticideCompany: '', purpose: 'agristream', _crpContext: null, _inputAppContext: null, _protocolContext: null, _agriWasteContext: null, _skillContext: null},
+    recordStream: null, recordMediaRecorder: null, recording: false, recordBlob: null, recordBlobUrl: '', showLive: false,
+    uploadCid: '', uploading: false, uploadError: '', lastUploadedVideoPurpose: '', lastUploadedVideoFileHash: '',
+
+    // Farmer-Specific Data
+    farmerVideos: [],
+    allFarmersVideos: [], // Global video stream for AgriStream
+    farmerListings: [], listingForm: {cid:'', minPrice:'', maxPrice:'', notifyBuyers: true}, createdListingId: null,
+    farmerFundingRequests: [], fundingForm: { title: '', crop: '', acres: null, amount: null, method: '', cid: '', description: '', timeline: null, roi: null, investorShare: null }, createdFundingRequest: false,
+
+    // AgriStream & Profile Data
+    agriStreamFilter: { search: '', purpose: '' },
+    userJoinDate: new Date().toISOString(),
+    
+    // Modals & UI State
+    notifications: [], recentNotifications: [],
+    showLoadingModal: false, loadingMessage: '',
+    targetAgriStreamVideoCid: null, highlightedAgriStreamVideoCid: null,
+    
+    // AI Features
+    plantImageFile: null, plantImageUrl: null, plantImageMimeType: null, analysisInProgress: false, analysisResultText: '', parsedAnalysis: { plantName: null, diseaseName: null, treatmentRecommended: null }, analysisErrorText: '',
+    chatMessages: [], chatInput: '', isGroqLoading: false,
+    groqSystemPrompt: "You are AgriBot, a friendly AI assistant for farmers. Provide clear, actionable advice on crop management, pests, and soil health. Always remind users to consult local experts.",
+    
+    // Farmer-Specific New Features Data
+    climateResilientPracticesDB: [
+        { id: 'crp1', name: 'Drought-Resistant Crop Variety Planting', description: 'Planting certified drought-resistant varieties.', videoPrompt: 'Show seed bag and planting process.', icon: 'fas fa-sun' },
+        { id: 'crp2', name: 'Water Conservation (Drip Irrigation)', description: 'Implementing drip irrigation systems.', videoPrompt: 'Show the installed drip irrigation system in operation.', icon: 'fas fa-tint' },
+    ],
+    farmerAdoptedCRPs: [],
+    parametricInsurancePolicies: [],
+    hyperlocalWeatherData: { 'West Field': { rainfallLast30DaysMm: 10, consecutiveDryDays: 15, avgTempC: 32 } },
+    authenticInputsDB: [
+        { qrCodeId: 'SEED_TOM_XYZ123', name: 'Tomato Seeds "SuperYield"', manufacturer: 'AgriCorp' },
+        { qrCodeId: 'FERT_NPK_ABC789', name: 'NPK Fertilizer 10-10-10', manufacturer: 'ChemGrow' },
+    ],
+    farmerInputApplications: [],
+    inputScanForm: { qrCodeContent: '', scannedInputDetails: null, isAuthentic: false },
+    farmingProtocolsDB: [
+        { id: 'proto_organic_tomato', name: 'Organic Tomato Protocol', description: 'SOP for certified organic tomato production.', icon: 'fas fa-award',
+          steps: [
+            { id: 'step1', name: 'Seed Sourcing & Prep', instruction: 'Document organic seed source.'},
+            { id: 'step2', name: 'Soil Amendment', instruction: 'Show application of approved organic amendments.'},
+            { id: 'step3', name: 'Harvest & Handling', instruction: 'Show harvesting process.'}
+          ]
+        },
+    ],
+    farmerProtocolAdherence: [],
+    activeProtocolBatch: null,
+    agriWasteForm: {type: '', quantity: '', condition: '', priceSOL: null, location: ''},
+    farmerAgriWasteListings: [],
+    skillModulesDB: [
+        { id: 'skill_pruning101', title: 'Basic Fruit Tree Pruning', description: 'Learn the fundamentals of pruning.', masterFarmerWallet: 'mentor_farmer_wallet_placeholder', pestividCid: 'bafybeidm6b63qzflosp72huhxsqpmsdcy6flgksftiyi2jekwnkoge5t5u', videoPrompt: 'Demonstrate pruning cuts on a young fruit tree.' },
+    ],
+    farmerSkillSubmissions: [],
+    skillModuleCreationForm: {title: '', description: '', category: ''},
+  },
+  computed: {
+    // Authentication-aware computed properties
+    isUserAuthenticated() {
+      return this.isLoggedIn && this.currentUser;
+    },
+    displayedUserIdentifier() {
+      if (this.currentUser) {
+        return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+      }
+      return 'Guest User';
+    },
+    currentUserIdentifier() {
+      return this.currentUser ? this.currentUser.id : null;
+    },
+    userName() {
+      return this.currentUser ? `${this.currentUser.firstName} ${this.currentUser.lastName}` : 'Guest User';
+    },
+    availableVideosForListing() {
+      const listedCids = new Set(this.farmerListings.map(l => l.cid));
+      return this.farmerVideos.filter(v => (v.purpose === 'sell' || v.purpose === 'agristream') && !listedCids.has(v.cid));
+    },
+    availableVideosForFunding() {
+      const fundingCids = new Set(this.farmerFundingRequests.map(r => r.cid));
+      return this.farmerVideos.filter(v => (v.purpose === 'funding' || v.purpose === 'agristream') && !fundingCids.has(v.cid));
+    },
+    currentUserAdoptedCRPs() { return this.farmerAdoptedCRPs.sort((a,b) => new Date(b.adoptionDate) - new Date(a.adoptionDate)); },
+    currentUserInputApplications() { return this.farmerInputApplications.sort((a,b) => new Date(b.applicationDate) - new Date(a.applicationDate)); },
+
+    // AgriStream computed properties
+    filteredAgriStreamVideos() {
+      let videos = [...this.allFarmersVideos].sort((a,b) => new Date(b.uploadTimestamp) - new Date(a.uploadTimestamp));
+
+      if (this.agriStreamFilter.search) {
+        const search = this.agriStreamFilter.search.toLowerCase();
+        videos = videos.filter(v =>
+          v.crop.toLowerCase().includes(search) ||
+          v.location.toLowerCase().includes(search) ||
+          (v.farmerName && v.farmerName.toLowerCase().includes(search)) ||
+          (v.pesticide && v.pesticide.toLowerCase().includes(search))
+        );
+      }
+
+      if (this.agriStreamFilter.purpose) {
+        videos = videos.filter(v => v.purpose === this.agriStreamFilter.purpose);
+      }
+
+      return videos;
+    },
+  },
+  watch: {
+    current(newPage, oldPage) {
+        window.scrollTo(0,0);
+        if (newPage === 'farmerAgriStream' && this.targetAgriStreamVideoCid) { this.scrollToAndHighlightAgriStreamVideo(); }
+        if (newPage === 'farmerChatbot') { this.initializeChatbot(); }
+    },
+    chatMessages: { handler() { this.$nextTick(() => this.scrollToChatBottom()); }, deep: true }
+  },
+  methods: {
+    // ---------------------------------------------------------------------------
+    // Authentication Methods
+    // ---------------------------------------------------------------------------
+    async login() {
+      this.authError = '';
+      this.authLoading = true;
+
+      try {
+        // Validate form
+        if (!this.loginForm.email || !this.loginForm.password) {
+          throw new Error('Please fill in all fields');
+        }
+
+        // Get users from localStorage
+        const users = JSON.parse(localStorage.getItem('pestivid_users') || '[]');
+
+        // Find user
+        const user = users.find(u =>
+          u.email.toLowerCase() === this.loginForm.email.toLowerCase() &&
+          u.password === this.loginForm.password
+        );
+
+        if (!user) {
+          throw new Error('Invalid email or password');
+        }
+
+        // Set current user
+        this.currentUser = user;
+        this.isLoggedIn = true;
+
+        // Save login state
+        localStorage.setItem('pestivid_current_user', JSON.stringify(user));
+        localStorage.setItem('pestivid_logged_in', 'true');
+
+        // Load user data
+        this.loadUserData();
+
+        // Close modal and reset form
+        this.showLoginModal = false;
+        this.loginForm = { email: '', password: '' };
+
+        this.addNotification(`Welcome back, ${user.firstName}!`, 'success');
+
+        // Redirect to dashboard
+        this.switchPage('farmerPestiVid');
+
+      } catch (error) {
+        this.authError = error.message;
+      } finally {
+        this.authLoading = false;
+      }
+    },
+
+    // Country and State management
+    onCountryChange() {
+      console.log('Country changed to:', this.registerForm.country);
+      this.registerForm.state = '';
+      this.loadStates();
+      console.log('States loaded:', this.states.length, 'states');
+    },
+
+    loadStates() {
+      // Comprehensive states/provinces for major countries
+      const stateData = {
+        'US': [
+          { code: 'AL', name: 'Alabama' },
+          { code: 'AK', name: 'Alaska' },
+          { code: 'AZ', name: 'Arizona' },
+          { code: 'AR', name: 'Arkansas' },
+          { code: 'CA', name: 'California' },
+          { code: 'CO', name: 'Colorado' },
+          { code: 'CT', name: 'Connecticut' },
+          { code: 'DE', name: 'Delaware' },
+          { code: 'FL', name: 'Florida' },
+          { code: 'GA', name: 'Georgia' },
+          { code: 'HI', name: 'Hawaii' },
+          { code: 'ID', name: 'Idaho' },
+          { code: 'IL', name: 'Illinois' },
+          { code: 'IN', name: 'Indiana' },
+          { code: 'IA', name: 'Iowa' },
+          { code: 'KS', name: 'Kansas' },
+          { code: 'KY', name: 'Kentucky' },
+          { code: 'LA', name: 'Louisiana' },
+          { code: 'ME', name: 'Maine' },
+          { code: 'MD', name: 'Maryland' },
+          { code: 'MA', name: 'Massachusetts' },
+          { code: 'MI', name: 'Michigan' },
+          { code: 'MN', name: 'Minnesota' },
+          { code: 'MS', name: 'Mississippi' },
+          { code: 'MO', name: 'Missouri' },
+          { code: 'MT', name: 'Montana' },
+          { code: 'NE', name: 'Nebraska' },
+          { code: 'NV', name: 'Nevada' },
+          { code: 'NH', name: 'New Hampshire' },
+          { code: 'NJ', name: 'New Jersey' },
+          { code: 'NM', name: 'New Mexico' },
+          { code: 'NY', name: 'New York' },
+          { code: 'NC', name: 'North Carolina' },
+          { code: 'ND', name: 'North Dakota' },
+          { code: 'OH', name: 'Ohio' },
+          { code: 'OK', name: 'Oklahoma' },
+          { code: 'OR', name: 'Oregon' },
+          { code: 'PA', name: 'Pennsylvania' },
+          { code: 'RI', name: 'Rhode Island' },
+          { code: 'SC', name: 'South Carolina' },
+          { code: 'SD', name: 'South Dakota' },
+          { code: 'TN', name: 'Tennessee' },
+          { code: 'TX', name: 'Texas' },
+          { code: 'UT', name: 'Utah' },
+          { code: 'VT', name: 'Vermont' },
+          { code: 'VA', name: 'Virginia' },
+          { code: 'WA', name: 'Washington' },
+          { code: 'WV', name: 'West Virginia' },
+          { code: 'WI', name: 'Wisconsin' },
+          { code: 'WY', name: 'Wyoming' }
+        ],
+        'IN': [
+          { code: 'AP', name: 'Andhra Pradesh' },
+          { code: 'AR', name: 'Arunachal Pradesh' },
+          { code: 'AS', name: 'Assam' },
+          { code: 'BR', name: 'Bihar' },
+          { code: 'CT', name: 'Chhattisgarh' },
+          { code: 'GA', name: 'Goa' },
+          { code: 'GJ', name: 'Gujarat' },
+          { code: 'HR', name: 'Haryana' },
+          { code: 'HP', name: 'Himachal Pradesh' },
+          { code: 'JH', name: 'Jharkhand' },
+          { code: 'KA', name: 'Karnataka' },
+          { code: 'KL', name: 'Kerala' },
+          { code: 'MP', name: 'Madhya Pradesh' },
+          { code: 'MH', name: 'Maharashtra' },
+          { code: 'MN', name: 'Manipur' },
+          { code: 'ML', name: 'Meghalaya' },
+          { code: 'MZ', name: 'Mizoram' },
+          { code: 'NL', name: 'Nagaland' },
+          { code: 'OR', name: 'Odisha' },
+          { code: 'PB', name: 'Punjab' },
+          { code: 'RJ', name: 'Rajasthan' },
+          { code: 'SK', name: 'Sikkim' },
+          { code: 'TN', name: 'Tamil Nadu' },
+          { code: 'TG', name: 'Telangana' },
+          { code: 'TR', name: 'Tripura' },
+          { code: 'UP', name: 'Uttar Pradesh' },
+          { code: 'UT', name: 'Uttarakhand' },
+          { code: 'WB', name: 'West Bengal' },
+          { code: 'AN', name: 'Andaman and Nicobar Islands' },
+          { code: 'CH', name: 'Chandigarh' },
+          { code: 'DH', name: 'Dadra and Nagar Haveli' },
+          { code: 'DD', name: 'Daman and Diu' },
+          { code: 'DL', name: 'Delhi' },
+          { code: 'JK', name: 'Jammu and Kashmir' },
+          { code: 'LA', name: 'Ladakh' },
+          { code: 'LD', name: 'Lakshadweep' },
+          { code: 'PY', name: 'Puducherry' }
+        ],
+        'CA': [
+          { code: 'AB', name: 'Alberta' },
+          { code: 'BC', name: 'British Columbia' },
+          { code: 'MB', name: 'Manitoba' },
+          { code: 'NB', name: 'New Brunswick' },
+          { code: 'NL', name: 'Newfoundland and Labrador' },
+          { code: 'NS', name: 'Nova Scotia' },
+          { code: 'ON', name: 'Ontario' },
+          { code: 'PE', name: 'Prince Edward Island' },
+          { code: 'QC', name: 'Quebec' },
+          { code: 'SK', name: 'Saskatchewan' },
+          { code: 'NT', name: 'Northwest Territories' },
+          { code: 'NU', name: 'Nunavut' },
+          { code: 'YT', name: 'Yukon' }
+        ],
+        'AU': [
+          { code: 'NSW', name: 'New South Wales' },
+          { code: 'QLD', name: 'Queensland' },
+          { code: 'SA', name: 'South Australia' },
+          { code: 'TAS', name: 'Tasmania' },
+          { code: 'VIC', name: 'Victoria' },
+          { code: 'WA', name: 'Western Australia' },
+          { code: 'ACT', name: 'Australian Capital Territory' },
+          { code: 'NT', name: 'Northern Territory' }
+        ],
+        'BR': [
+          { code: 'AC', name: 'Acre' },
+          { code: 'AL', name: 'Alagoas' },
+          { code: 'AP', name: 'Amapá' },
+          { code: 'AM', name: 'Amazonas' },
+          { code: 'BA', name: 'Bahia' },
+          { code: 'CE', name: 'Ceará' },
+          { code: 'DF', name: 'Distrito Federal' },
+          { code: 'ES', name: 'Espírito Santo' },
+          { code: 'GO', name: 'Goiás' },
+          { code: 'MA', name: 'Maranhão' },
+          { code: 'MT', name: 'Mato Grosso' },
+          { code: 'MS', name: 'Mato Grosso do Sul' },
+          { code: 'MG', name: 'Minas Gerais' },
+          { code: 'PA', name: 'Pará' },
+          { code: 'PB', name: 'Paraíba' },
+          { code: 'PR', name: 'Paraná' },
+          { code: 'PE', name: 'Pernambuco' },
+          { code: 'PI', name: 'Piauí' },
+          { code: 'RJ', name: 'Rio de Janeiro' },
+          { code: 'RN', name: 'Rio Grande do Norte' },
+          { code: 'RS', name: 'Rio Grande do Sul' },
+          { code: 'RO', name: 'Rondônia' },
+          { code: 'RR', name: 'Roraima' },
+          { code: 'SC', name: 'Santa Catarina' },
+          { code: 'SP', name: 'São Paulo' },
+          { code: 'SE', name: 'Sergipe' },
+          { code: 'TO', name: 'Tocantins' }
+        ],
+        'GB': [
+          { code: 'ENG', name: 'England' },
+          { code: 'SCT', name: 'Scotland' },
+          { code: 'WLS', name: 'Wales' },
+          { code: 'NIR', name: 'Northern Ireland' }
+        ],
+        'DE': [
+          { code: 'BW', name: 'Baden-Württemberg' },
+          { code: 'BY', name: 'Bavaria' },
+          { code: 'BE', name: 'Berlin' },
+          { code: 'BB', name: 'Brandenburg' },
+          { code: 'HB', name: 'Bremen' },
+          { code: 'HH', name: 'Hamburg' },
+          { code: 'HE', name: 'Hesse' },
+          { code: 'MV', name: 'Mecklenburg-Vorpommern' },
+          { code: 'NI', name: 'Lower Saxony' },
+          { code: 'NW', name: 'North Rhine-Westphalia' },
+          { code: 'RP', name: 'Rhineland-Palatinate' },
+          { code: 'SL', name: 'Saarland' },
+          { code: 'SN', name: 'Saxony' },
+          { code: 'ST', name: 'Saxony-Anhalt' },
+          { code: 'SH', name: 'Schleswig-Holstein' },
+          { code: 'TH', name: 'Thuringia' }
+        ],
+        'FR': [
+          { code: 'ARA', name: 'Auvergne-Rhône-Alpes' },
+          { code: 'BFC', name: 'Bourgogne-Franche-Comté' },
+          { code: 'BRE', name: 'Brittany' },
+          { code: 'CVL', name: 'Centre-Val de Loire' },
+          { code: 'COR', name: 'Corsica' },
+          { code: 'GES', name: 'Grand Est' },
+          { code: 'HDF', name: 'Hauts-de-France' },
+          { code: 'IDF', name: 'Île-de-France' },
+          { code: 'NOR', name: 'Normandy' },
+          { code: 'NAQ', name: 'Nouvelle-Aquitaine' },
+          { code: 'OCC', name: 'Occitania' },
+          { code: 'PDL', name: 'Pays de la Loire' },
+          { code: 'PAC', name: 'Provence-Alpes-Côte d\'Azur' }
+        ],
+        'CN': [
+          { code: 'BJ', name: 'Beijing' },
+          { code: 'TJ', name: 'Tianjin' },
+          { code: 'HE', name: 'Hebei' },
+          { code: 'SX', name: 'Shanxi' },
+          { code: 'NM', name: 'Inner Mongolia' },
+          { code: 'LN', name: 'Liaoning' },
+          { code: 'JL', name: 'Jilin' },
+          { code: 'HL', name: 'Heilongjiang' },
+          { code: 'SH', name: 'Shanghai' },
+          { code: 'JS', name: 'Jiangsu' },
+          { code: 'ZJ', name: 'Zhejiang' },
+          { code: 'AH', name: 'Anhui' },
+          { code: 'FJ', name: 'Fujian' },
+          { code: 'JX', name: 'Jiangxi' },
+          { code: 'SD', name: 'Shandong' },
+          { code: 'HA', name: 'Henan' },
+          { code: 'HB', name: 'Hubei' },
+          { code: 'HN', name: 'Hunan' },
+          { code: 'GD', name: 'Guangdong' },
+          { code: 'GX', name: 'Guangxi' },
+          { code: 'HI', name: 'Hainan' },
+          { code: 'CQ', name: 'Chongqing' },
+          { code: 'SC', name: 'Sichuan' },
+          { code: 'GZ', name: 'Guizhou' },
+          { code: 'YN', name: 'Yunnan' },
+          { code: 'XZ', name: 'Tibet' },
+          { code: 'SN', name: 'Shaanxi' },
+          { code: 'GS', name: 'Gansu' },
+          { code: 'QH', name: 'Qinghai' },
+          { code: 'NX', name: 'Ningxia' },
+          { code: 'XJ', name: 'Xinjiang' }
+        ],
+        'MX': [
+          { code: 'AGU', name: 'Aguascalientes' },
+          { code: 'BCN', name: 'Baja California' },
+          { code: 'BCS', name: 'Baja California Sur' },
+          { code: 'CAM', name: 'Campeche' },
+          { code: 'CHP', name: 'Chiapas' },
+          { code: 'CHH', name: 'Chihuahua' },
+          { code: 'COA', name: 'Coahuila' },
+          { code: 'COL', name: 'Colima' },
+          { code: 'DUR', name: 'Durango' },
+          { code: 'GUA', name: 'Guanajuato' },
+          { code: 'GRO', name: 'Guerrero' },
+          { code: 'HID', name: 'Hidalgo' },
+          { code: 'JAL', name: 'Jalisco' },
+          { code: 'MEX', name: 'Mexico' },
+          { code: 'MIC', name: 'Michoacán' },
+          { code: 'MOR', name: 'Morelos' },
+          { code: 'NAY', name: 'Nayarit' },
+          { code: 'NLE', name: 'Nuevo León' },
+          { code: 'OAX', name: 'Oaxaca' },
+          { code: 'PUE', name: 'Puebla' },
+          { code: 'QUE', name: 'Querétaro' },
+          { code: 'ROO', name: 'Quintana Roo' },
+          { code: 'SLP', name: 'San Luis Potosí' },
+          { code: 'SIN', name: 'Sinaloa' },
+          { code: 'SON', name: 'Sonora' },
+          { code: 'TAB', name: 'Tabasco' },
+          { code: 'TAM', name: 'Tamaulipas' },
+          { code: 'TLA', name: 'Tlaxcala' },
+          { code: 'VER', name: 'Veracruz' },
+          { code: 'YUC', name: 'Yucatán' },
+          { code: 'ZAC', name: 'Zacatecas' }
+        ],
+        'NG': [
+          { code: 'AB', name: 'Abia' },
+          { code: 'AD', name: 'Adamawa' },
+          { code: 'AK', name: 'Akwa Ibom' },
+          { code: 'AN', name: 'Anambra' },
+          { code: 'BA', name: 'Bauchi' },
+          { code: 'BY', name: 'Bayelsa' },
+          { code: 'BE', name: 'Benue' },
+          { code: 'BO', name: 'Borno' },
+          { code: 'CR', name: 'Cross River' },
+          { code: 'DE', name: 'Delta' },
+          { code: 'EB', name: 'Ebonyi' },
+          { code: 'ED', name: 'Edo' },
+          { code: 'EK', name: 'Ekiti' },
+          { code: 'EN', name: 'Enugu' },
+          { code: 'GO', name: 'Gombe' },
+          { code: 'IM', name: 'Imo' },
+          { code: 'JI', name: 'Jigawa' },
+          { code: 'KD', name: 'Kaduna' },
+          { code: 'KN', name: 'Kano' },
+          { code: 'KT', name: 'Katsina' },
+          { code: 'KE', name: 'Kebbi' },
+          { code: 'KO', name: 'Kogi' },
+          { code: 'KW', name: 'Kwara' },
+          { code: 'LA', name: 'Lagos' },
+          { code: 'NA', name: 'Nasarawa' },
+          { code: 'NI', name: 'Niger' },
+          { code: 'OG', name: 'Ogun' },
+          { code: 'ON', name: 'Ondo' },
+          { code: 'OS', name: 'Osun' },
+          { code: 'OY', name: 'Oyo' },
+          { code: 'PL', name: 'Plateau' },
+          { code: 'RI', name: 'Rivers' },
+          { code: 'SO', name: 'Sokoto' },
+          { code: 'TA', name: 'Taraba' },
+          { code: 'YO', name: 'Yobe' },
+          { code: 'ZA', name: 'Zamfara' },
+          { code: 'FC', name: 'Federal Capital Territory' }
+        ]
+      };
+
+      this.states = stateData[this.registerForm.country] || [];
+      console.log('Loading states for country:', this.registerForm.country);
+      console.log('Available states:', this.states);
+    },
+
+    initializeCountries() {
+      this.countries = [
+        { code: 'AF', name: 'Afghanistan' },
+        { code: 'AL', name: 'Albania' },
+        { code: 'DZ', name: 'Algeria' },
+        { code: 'AR', name: 'Argentina' },
+        { code: 'AM', name: 'Armenia' },
+        { code: 'AU', name: 'Australia' },
+        { code: 'AT', name: 'Austria' },
+        { code: 'AZ', name: 'Azerbaijan' },
+        { code: 'BH', name: 'Bahrain' },
+        { code: 'BD', name: 'Bangladesh' },
+        { code: 'BY', name: 'Belarus' },
+        { code: 'BE', name: 'Belgium' },
+        { code: 'BZ', name: 'Belize' },
+        { code: 'BJ', name: 'Benin' },
+        { code: 'BT', name: 'Bhutan' },
+        { code: 'BO', name: 'Bolivia' },
+        { code: 'BA', name: 'Bosnia and Herzegovina' },
+        { code: 'BW', name: 'Botswana' },
+        { code: 'BR', name: 'Brazil' },
+        { code: 'BG', name: 'Bulgaria' },
+        { code: 'BF', name: 'Burkina Faso' },
+        { code: 'BI', name: 'Burundi' },
+        { code: 'KH', name: 'Cambodia' },
+        { code: 'CM', name: 'Cameroon' },
+        { code: 'CA', name: 'Canada' },
+        { code: 'CF', name: 'Central African Republic' },
+        { code: 'TD', name: 'Chad' },
+        { code: 'CL', name: 'Chile' },
+        { code: 'CN', name: 'China' },
+        { code: 'CO', name: 'Colombia' },
+        { code: 'CR', name: 'Costa Rica' },
+        { code: 'HR', name: 'Croatia' },
+        { code: 'CU', name: 'Cuba' },
+        { code: 'CY', name: 'Cyprus' },
+        { code: 'CZ', name: 'Czech Republic' },
+        { code: 'DK', name: 'Denmark' },
+        { code: 'DJ', name: 'Djibouti' },
+        { code: 'DO', name: 'Dominican Republic' },
+        { code: 'EC', name: 'Ecuador' },
+        { code: 'EG', name: 'Egypt' },
+        { code: 'SV', name: 'El Salvador' },
+        { code: 'EE', name: 'Estonia' },
+        { code: 'ET', name: 'Ethiopia' },
+        { code: 'FI', name: 'Finland' },
+        { code: 'FR', name: 'France' },
+        { code: 'GA', name: 'Gabon' },
+        { code: 'GM', name: 'Gambia' },
+        { code: 'GE', name: 'Georgia' },
+        { code: 'DE', name: 'Germany' },
+        { code: 'GH', name: 'Ghana' },
+        { code: 'GR', name: 'Greece' },
+        { code: 'GT', name: 'Guatemala' },
+        { code: 'GN', name: 'Guinea' },
+        { code: 'GY', name: 'Guyana' },
+        { code: 'HT', name: 'Haiti' },
+        { code: 'HN', name: 'Honduras' },
+        { code: 'HU', name: 'Hungary' },
+        { code: 'IS', name: 'Iceland' },
+        { code: 'IN', name: 'India' },
+        { code: 'ID', name: 'Indonesia' },
+        { code: 'IR', name: 'Iran' },
+        { code: 'IQ', name: 'Iraq' },
+        { code: 'IE', name: 'Ireland' },
+        { code: 'IL', name: 'Israel' },
+        { code: 'IT', name: 'Italy' },
+        { code: 'JM', name: 'Jamaica' },
+        { code: 'JP', name: 'Japan' },
+        { code: 'JO', name: 'Jordan' },
+        { code: 'KZ', name: 'Kazakhstan' },
+        { code: 'KE', name: 'Kenya' },
+        { code: 'KW', name: 'Kuwait' },
+        { code: 'KG', name: 'Kyrgyzstan' },
+        { code: 'LA', name: 'Laos' },
+        { code: 'LV', name: 'Latvia' },
+        { code: 'LB', name: 'Lebanon' },
+        { code: 'LS', name: 'Lesotho' },
+        { code: 'LR', name: 'Liberia' },
+        { code: 'LY', name: 'Libya' },
+        { code: 'LT', name: 'Lithuania' },
+        { code: 'LU', name: 'Luxembourg' },
+        { code: 'MG', name: 'Madagascar' },
+        { code: 'MW', name: 'Malawi' },
+        { code: 'MY', name: 'Malaysia' },
+        { code: 'MV', name: 'Maldives' },
+        { code: 'ML', name: 'Mali' },
+        { code: 'MT', name: 'Malta' },
+        { code: 'MR', name: 'Mauritania' },
+        { code: 'MU', name: 'Mauritius' },
+        { code: 'MX', name: 'Mexico' },
+        { code: 'MD', name: 'Moldova' },
+        { code: 'MN', name: 'Mongolia' },
+        { code: 'ME', name: 'Montenegro' },
+        { code: 'MA', name: 'Morocco' },
+        { code: 'MZ', name: 'Mozambique' },
+        { code: 'MM', name: 'Myanmar' },
+        { code: 'NA', name: 'Namibia' },
+        { code: 'NP', name: 'Nepal' },
+        { code: 'NL', name: 'Netherlands' },
+        { code: 'NZ', name: 'New Zealand' },
+        { code: 'NI', name: 'Nicaragua' },
+        { code: 'NE', name: 'Niger' },
+        { code: 'NG', name: 'Nigeria' },
+        { code: 'NO', name: 'Norway' },
+        { code: 'OM', name: 'Oman' },
+        { code: 'PK', name: 'Pakistan' },
+        { code: 'PA', name: 'Panama' },
+        { code: 'PG', name: 'Papua New Guinea' },
+        { code: 'PY', name: 'Paraguay' },
+        { code: 'PE', name: 'Peru' },
+        { code: 'PH', name: 'Philippines' },
+        { code: 'PL', name: 'Poland' },
+        { code: 'PT', name: 'Portugal' },
+        { code: 'QA', name: 'Qatar' },
+        { code: 'RO', name: 'Romania' },
+        { code: 'RU', name: 'Russia' },
+        { code: 'RW', name: 'Rwanda' },
+        { code: 'SA', name: 'Saudi Arabia' },
+        { code: 'SN', name: 'Senegal' },
+        { code: 'RS', name: 'Serbia' },
+        { code: 'SL', name: 'Sierra Leone' },
+        { code: 'SG', name: 'Singapore' },
+        { code: 'SK', name: 'Slovakia' },
+        { code: 'SI', name: 'Slovenia' },
+        { code: 'SO', name: 'Somalia' },
+        { code: 'ZA', name: 'South Africa' },
+        { code: 'KR', name: 'South Korea' },
+        { code: 'SS', name: 'South Sudan' },
+        { code: 'ES', name: 'Spain' },
+        { code: 'LK', name: 'Sri Lanka' },
+        { code: 'SD', name: 'Sudan' },
+        { code: 'SR', name: 'Suriname' },
+        { code: 'SE', name: 'Sweden' },
+        { code: 'CH', name: 'Switzerland' },
+        { code: 'SY', name: 'Syria' },
+        { code: 'TW', name: 'Taiwan' },
+        { code: 'TJ', name: 'Tajikistan' },
+        { code: 'TZ', name: 'Tanzania' },
+        { code: 'TH', name: 'Thailand' },
+        { code: 'TG', name: 'Togo' },
+        { code: 'TN', name: 'Tunisia' },
+        { code: 'TR', name: 'Turkey' },
+        { code: 'TM', name: 'Turkmenistan' },
+        { code: 'UG', name: 'Uganda' },
+        { code: 'UA', name: 'Ukraine' },
+        { code: 'AE', name: 'United Arab Emirates' },
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'US', name: 'United States' },
+        { code: 'UY', name: 'Uruguay' },
+        { code: 'UZ', name: 'Uzbekistan' },
+        { code: 'VE', name: 'Venezuela' },
+        { code: 'VN', name: 'Vietnam' },
+        { code: 'YE', name: 'Yemen' },
+        { code: 'ZM', name: 'Zambia' },
+        { code: 'ZW', name: 'Zimbabwe' }
+      ];
+    },
+
+    async register() {
+      this.authError = '';
+      this.authLoading = true;
+
+      try {
+        // Validate form
+        const form = this.registerForm;
+
+        if (!form.firstName || !form.lastName || !form.email || !form.phoneNumber ||
+            !form.country || !form.state || !form.area || !form.password || !form.confirmPassword) {
+          throw new Error('Please fill in all required fields');
+        }
+
+        if (form.password !== form.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
+
+        if (form.password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        // Check if email already exists
+        const users = JSON.parse(localStorage.getItem('pestivid_users') || '[]');
+        if (users.find(u => u.email.toLowerCase() === form.email.toLowerCase())) {
+          throw new Error('Email address is already registered');
+        }
+
+        // Create new user
+        const newUser = {
+          id: 'user_' + Date.now(),
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email.toLowerCase(),
+          phoneNumber: form.phoneNumber,
+          country: form.country,
+          state: form.state,
+          area: form.area,
+          password: form.password, // In real app, this should be hashed
+          joinDate: new Date().toISOString(),
+          isActive: true
+        };
+
+        // Save user
+        users.push(newUser);
+        localStorage.setItem('pestivid_users', JSON.stringify(users));
+
+        // Auto-login the new user
+        this.currentUser = newUser;
+        this.isLoggedIn = true;
+        localStorage.setItem('pestivid_current_user', JSON.stringify(newUser));
+        localStorage.setItem('pestivid_logged_in', 'true');
+
+        // Initialize user data
+        this.initializeUserData();
+
+        // Close modal and reset form
+        this.showRegisterModal = false;
+        this.resetRegisterForm();
+
+        this.addNotification(`Welcome to PestiVid, ${newUser.firstName}!`, 'success');
+
+        // Redirect to dashboard
+        this.switchPage('farmerPestiVid');
+
+      } catch (error) {
+        this.authError = error.message;
+      } finally {
+        this.authLoading = false;
+      }
+    },
+
+    logout() {
+      this.currentUser = null;
+      this.isLoggedIn = false;
+
+      // Clear login state
+      localStorage.removeItem('pestivid_current_user');
+      localStorage.removeItem('pestivid_logged_in');
+
+      // Clear user data
+      this.farmerVideos = [];
+      this.farmerListings = [];
+      this.farmerFundingRequests = [];
+
+      this.addNotification('Logged out successfully', 'success');
+
+      // Redirect to home
+      this.switchPage('landing');
+    },
+
+    resetRegisterForm() {
+      this.registerForm = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        country: '',
+        state: '',
+        area: '',
+        password: '',
+        confirmPassword: ''
+      };
+    },
+
+    // Check if user is already logged in
+    checkLoginStatus() {
+      const isLoggedIn = localStorage.getItem('pestivid_logged_in');
+      const currentUser = localStorage.getItem('pestivid_current_user');
+
+      if (isLoggedIn === 'true' && currentUser) {
+        try {
+          this.currentUser = JSON.parse(currentUser);
+          this.isLoggedIn = true;
+          this.loadUserData();
+        } catch (error) {
+          console.error('Error loading user data:', error);
+          this.logout();
+        }
+      }
+    },
+
+    // Initialize user data for new users
+    initializeUserData() {
+      const userId = this.currentUser.id;
+
+      // Initialize empty arrays for user data
+      if (!localStorage.getItem(`pestivid_videos_${userId}`)) {
+        localStorage.setItem(`pestivid_videos_${userId}`, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(`pestivid_listings_${userId}`)) {
+        localStorage.setItem(`pestivid_listings_${userId}`, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(`pestivid_funding_${userId}`)) {
+        localStorage.setItem(`pestivid_funding_${userId}`, JSON.stringify([]));
+      }
+    },
+
+    // Load user-specific data
+    loadUserData() {
+      if (!this.currentUser) return;
+
+      const userId = this.currentUser.id;
+
+      try {
+        // Load user's videos
+        const videos = localStorage.getItem(`pestivid_videos_${userId}`);
+        this.farmerVideos = videos ? JSON.parse(videos) : [];
+
+        // Load user's listings
+        const listings = localStorage.getItem(`pestivid_listings_${userId}`);
+        this.farmerListings = listings ? JSON.parse(listings) : [];
+
+        // Load user's funding requests
+        const funding = localStorage.getItem(`pestivid_funding_${userId}`);
+        this.farmerFundingRequests = funding ? JSON.parse(funding) : [];
+
+        // Update global videos with user's videos
+        this.updateGlobalVideos();
+
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    },
+
+    // Update global videos array with current user's videos
+    updateGlobalVideos() {
+      if (!this.currentUser) return;
+
+      // Remove current user's old videos from global array
+      this.allFarmersVideos = this.allFarmersVideos.filter(v =>
+        v.farmerWallet !== this.currentUser.id
+      );
+
+      // Add current user's videos to global array
+      const userVideos = this.farmerVideos.map(video => ({
+        ...video,
+        farmerName: `${this.currentUser.firstName} ${this.currentUser.lastName}`,
+        farmerWallet: this.currentUser.id,
+        likes: video.likes || 0,
+        liked: false,
+        loading: false,
+        error: false
+      }));
+
+      this.allFarmersVideos.unshift(...userVideos);
+    },
+
+    async register() {
+      this.authError = '';
+      this.authLoading = true;
+
+      try {
+        // Validate form
+        const form = this.registerForm;
+
+        if (!form.firstName || !form.lastName || !form.email || !form.phoneNumber ||
+            !form.country || !form.state || !form.area || !form.password || !form.confirmPassword) {
+          throw new Error('Please fill in all required fields');
+        }
+
+        if (form.password !== form.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
+
+        if (form.password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        // Check if email already exists
+        const users = JSON.parse(localStorage.getItem('pestivid_users') || '[]');
+        if (users.find(u => u.email.toLowerCase() === form.email.toLowerCase())) {
+          throw new Error('Email address is already registered');
+        }
+
+        // Create new user
+        const newUser = {
+          id: 'user_' + Date.now(),
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email.toLowerCase(),
+          phoneNumber: form.phoneNumber,
+          country: form.country,
+          state: form.state,
+          area: form.area,
+          password: form.password, // In real app, this should be hashed
+          joinDate: new Date().toISOString(),
+          isActive: true
+        };
+
+        // Save user
+        users.push(newUser);
+        localStorage.setItem('pestivid_users', JSON.stringify(users));
+
+        // Auto-login the new user
+        this.currentUser = newUser;
+        this.isLoggedIn = true;
+        localStorage.setItem('pestivid_current_user', JSON.stringify(newUser));
+        localStorage.setItem('pestivid_logged_in', 'true');
+
+        // Initialize user data
+        this.initializeUserData();
+
+        // Close modal and reset form
+        this.showRegisterModal = false;
+        this.resetRegisterForm();
+
+        this.addNotification(`Welcome to PestiVid, ${newUser.firstName}!`, 'success');
+
+        // Redirect to dashboard
+        this.switchPage('farmerPestiVid');
+
+      } catch (error) {
+        this.authError = error.message;
+      } finally {
+        this.authLoading = false;
+      }
+    },
+
+    logout() {
+      this.currentUser = null;
+      this.isLoggedIn = false;
+
+      // Clear login state
+      localStorage.removeItem('pestivid_current_user');
+      localStorage.removeItem('pestivid_logged_in');
+
+      // Clear user data
+      this.farmerVideos = [];
+      this.farmerListings = [];
+      this.farmerFundingRequests = [];
+
+      this.addNotification('Logged out successfully', 'success');
+
+      // Redirect to home
+      this.switchPage('landing');
+    },
+
+    resetRegisterForm() {
+      this.registerForm = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        country: '',
+        state: '',
+        area: '',
+        password: '',
+        confirmPassword: ''
+      };
+    },
+
+    // ---------------------------------------------------------------------------
+    // Blockchain Initialization
+    // ---------------------------------------------------------------------------
+    async initializeBlockchain() {
+      if (!this.useBlockchain) {
+        console.log('Blockchain disabled, using localStorage');
+        return;
+      }
+
+      try {
+        // Load contract info
+        const response = await fetch('./contract-info.json');
+        const contractInfo = await response.json();
+        this.contractAddress = contractInfo.address;
+        this.contractABI = JSON.parse(contractInfo.abi);
+
+        // Initialize Web3
+        if (typeof window.ethereum !== 'undefined') {
+          this.web3 = new Web3(window.ethereum);
+
+          // Request account access
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          this.currentUserAddress = accounts[0];
+
+          // Initialize contract
+          this.contract = new this.web3.eth.Contract(this.contractABI, this.contractAddress);
+          this.isBlockchainConnected = true;
+
+          console.log('✅ Blockchain connected:', this.currentUserAddress);
+          this.addNotification('Blockchain connected successfully!', 'success');
+
+          // Load data from blockchain
+          await this.loadDataFromBlockchain();
+
+        } else {
+          throw new Error('MetaMask not found');
+        }
+      } catch (error) {
+        console.error('❌ Blockchain initialization failed:', error);
+        this.addNotification('Blockchain connection failed. Using local storage.', 'warning');
+        this.useBlockchain = false;
+      }
+    },
+
+    async loadDataFromBlockchain() {
+      if (!this.isBlockchainConnected) return;
+
+      try {
+        // Load all videos from blockchain
+        const allCids = await this.contract.methods.getAllVideoCids().call();
+        this.allFarmersVideos = [];
+
+        for (const cid of allCids) {
+          const video = await this.contract.methods.videos(cid).call();
+          if (video.exists) {
+            this.allFarmersVideos.push({
+              cid: video.cid,
+              videoFileHash: video.videoFileHash,
+              farmerWallet: video.farmerWallet,
+              farmerName: video.farmerName,
+              crop: video.crop,
+              location: video.location,
+              pesticide: video.pesticide,
+              pesticideCompany: video.pesticideCompany,
+              purpose: video.purpose,
+              uploadTimestamp: new Date(video.uploadTimestamp * 1000).toISOString(),
+              likes: parseInt(video.likes),
+              liked: false,
+              loading: false
+            });
+          }
+        }
+
+        // Load user's videos
+        this.farmerVideos = this.allFarmersVideos.filter(v =>
+          v.farmerWallet.toLowerCase() === this.currentUserAddress.toLowerCase()
+        );
+
+        console.log(`📹 Loaded ${this.allFarmersVideos.length} videos from blockchain`);
+
+      } catch (error) {
+        console.error('Failed to load data from blockchain:', error);
+      }
+    },
+
+    // ---------------------------------------------------------------------------
+    // Core App Flow
+    // ---------------------------------------------------------------------------
+    switchPage(page) {
+      // Check if page requires authentication
+      const protectedPages = ['farmerPestiVid', 'farmerProfile', 'farmerSell', 'farmerFunding'];
+
+      if (protectedPages.includes(page) && !this.isUserAuthenticated()) {
+        this.addNotification('Please register or login to access this feature', 'warning');
+        this.showRegisterModal = true;
+        return;
+      }
+
+      this.current = page;
+      this.showMobileMenu = false;
+    },
+
+    getStarted() {
+      if (!this.isUserAuthenticated()) {
+        this.showRegisterModal = true;
+      } else {
+        this.switchPage('farmerPestiVid');
+      }
+    },
+
+    // ---------------------------------------------------------------------------
+    // PestiVid Video & Data Handling
+    // ---------------------------------------------------------------------------
+    async simulateTransaction(description = "Processing...") { this.showLoadingModal = true; this.loadingMessage = `Simulating transaction for: ${description}`; await new Promise(resolve => setTimeout(resolve, 2000)); const txHash = 'sim_tx_' + Date.now().toString(16); this.showLoadingModal = false; return txHash; },
+    async calculateFileHash(fileBlob) { if (!fileBlob) return null; try { const buffer = await fileBlob.arrayBuffer(); const hashBuffer = await crypto.subtle.digest('SHA-256', buffer); const hashArray = Array.from(new Uint8Array(hashBuffer)); return hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); } catch (error) { this.addNotification("Error calculating video hash.", "error"); return null; } },
+    async startVideo() { if (this.recording || this.uploading) return; this.recordBlob = null; this.recordBlobUrl = ''; this.uploadCid = ''; this.uploadError = ''; this.showLive = true; try { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); this.recordStream = stream; this.$refs.liveVideo.srcObject = stream; this.$refs.liveVideo.play(); let chunks = []; this.recording = true; this.recordMediaRecorder = new MediaRecorder(stream); this.recordMediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); }; this.recordMediaRecorder.onstop = () => { this.recordBlob = new Blob(chunks, { type: 'video/webm' }); this.recordBlobUrl = URL.createObjectURL(this.recordBlob); this.showLive = false; stream.getTracks().forEach(t => t.stop()); this.recordStream = null; this.recording = false; }; this.recordMediaRecorder.start(); } catch (e) { alert("Camera access failed. Please ensure you have a camera and have granted permission."); this.showLive = false; this.recording = false; } },
+    stopVideo() { if (this.recordMediaRecorder && this.recordMediaRecorder.state === "recording") this.recordMediaRecorder.stop(); if (this.recordStream) { this.recordStream.getTracks().forEach(t => t.stop()); } this.recording = false; this.showLive = false; },
+    async uploadVideo() {
+        if (!this.recordBlob || !this.recordForm.crop || !this.recordForm.location) {
+            alert("Please record a video and fill in Crop and Location fields.");
+            return;
+        }
+
+        if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE') {
+            this.uploadError = "Pinata JWT is not configured. Please update it in the script.";
+            alert(this.uploadError);
+            return;
+        }
+
+        this.uploading = true;
+        this.showLoadingModal = true;
+        this.loadingMessage = "Uploading video to IPFS...";
+
+        const videoFileHash = await this.calculateFileHash(this.recordBlob);
+        if (!videoFileHash) {
+            this.uploadError = "Failed to calculate video hash.";
+            this.uploading = false;
+            this.showLoadingModal = false;
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', this.recordBlob, `pestivid_${Date.now()}.webm`);
+        formData.append('pinataMetadata', JSON.stringify({
+            name: this.recordForm.crop,
+            keyvalues: {
+                uploader: this.currentUserIdentifier,
+                purpose: this.recordForm.purpose,
+                timestamp: new Date().toISOString()
+            }
+        }));
+
+        try {
+            // Step 1: Upload video to IPFS
+            console.log('📤 Uploading video to IPFS...');
+            const resp = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+                headers: { Authorization: `Bearer ${this.pinataJwt}` }
+            });
+
+            this.uploadCid = resp.data.IpfsHash;
+            this.lastUploadedVideoPurpose = this.recordForm.purpose;
+            this.lastUploadedVideoFileHash = videoFileHash;
+
+            console.log('✅ Video uploaded to IPFS:', this.uploadCid);
+            console.log('🔗 IPFS URL:', `https://${this.pinataGateway}/ipfs/${this.uploadCid}`);
+
+            // Step 2: Store metadata on blockchain
+            if (this.useBlockchain && this.isBlockchainConnected) {
+                this.loadingMessage = "Storing metadata on Avalanche blockchain...";
+                console.log('⛓️ Storing metadata on blockchain...');
+
+                try {
+                    // Call smart contract to store metadata
+                    const tx = await this.contract.methods.uploadVideo(
+                        this.uploadCid,
+                        videoFileHash,
+                        this.recordForm.crop,
+                        this.recordForm.location,
+                        this.recordForm.pesticide || '',
+                        this.recordForm.pesticideCompany || '',
+                        this.recordForm.purpose
+                    ).send({
+                        from: this.currentUserAddress,
+                        gas: 500000
+                    });
+
+                    console.log('✅ Metadata stored on blockchain:', tx.transactionHash);
+                    console.log('🔍 View transaction:', `https://testnet.snowtrace.io/tx/${tx.transactionHash}`);
+
+                    // Reload data from blockchain
+                    await this.loadDataFromBlockchain();
+
+                    this.addNotification(`Video stored on IPFS and blockchain! TX: ${tx.transactionHash.substring(0, 10)}...`, 'success');
+
+                } catch (blockchainError) {
+                    console.error('❌ Blockchain storage failed:', blockchainError);
+                    this.addNotification('Video uploaded to IPFS but blockchain storage failed', 'warning');
+
+                    // Fallback to localStorage
+                    this.storeVideoLocally();
+                }
+            } else {
+                // Fallback to localStorage
+                console.log('💾 Storing metadata locally...');
+                this.storeVideoLocally();
+            }
+
+            // Handle specific purpose actions
+            if (this.lastUploadedVideoPurpose === 'sell') {
+                this.navigateToPageWithParam('farmerSell', 'cid', this.uploadCid);
+            } else if (this.lastUploadedVideoPurpose === 'funding') {
+                this.navigateToPageWithParam('farmerFunding', 'cid', this.uploadCid);
+            }
+
+            this.resetRecordForm();
+
+        } catch (e) {
+            this.uploadError = `Upload failed: ${e.response?.data?.error?.details || e.message}`;
+            console.error("❌ Upload Error:", e);
+            this.addNotification('Failed to upload video. Please try again.', 'error');
+        } finally {
+            this.uploading = false;
+            this.showLoadingModal = false;
+        }
+    },
+
+    storeVideoLocally() {
+        if (!this.currentUser) {
+            this.addNotification('Please login to upload videos', 'error');
+            return;
+        }
+
+        const newVideoData = {
+            cid: this.uploadCid,
+            videoFileHash: this.lastUploadedVideoFileHash,
+            farmerWallet: this.currentUser.id,
+            crop: this.recordForm.crop,
+            location: this.recordForm.location,
+            pesticide: this.recordForm.pesticide,
+            pesticideCompany: this.recordForm.pesticideCompany,
+            purpose: this.recordForm.purpose,
+            uploadTimestamp: new Date().toISOString(),
+            likes: 0
+        };
+
+        // Add to user's videos
+        this.farmerVideos.unshift(newVideoData);
+
+        // Save user's videos
+        localStorage.setItem(`pestivid_videos_${this.currentUser.id}`, JSON.stringify(this.farmerVideos));
+
+        // Add to global stream
+        const globalVideoData = {
+            ...newVideoData,
+            farmerName: this.userName,
+            liked: false,
+            loading: false,
+            error: false
+        };
+        this.allFarmersVideos.unshift(globalVideoData);
+
+        this.addNotification(`Video uploaded to IPFS and stored securely!`, 'success');
+    },
+    resetRecordForm() {
+        this.recordForm = { crop: '', pesticide: '', location: '', pesticideCompany: '', purpose: 'agristream', _crpContext: null, _inputAppContext: null, _protocolContext: null, _agriWasteContext: null, _skillContext: null };
+        if (this.recordBlobUrl) URL.revokeObjectURL(this.recordBlobUrl);
+        this.recordBlob = null; this.recordBlobUrl = '';
+    },
+    ipfsUrl(cid) {
+      if (!cid) return "";
+
+      // Try multiple IPFS gateways for better reliability
+      const gateways = [
+        `https://${this.pinataGateway}/ipfs/`,
+        'https://ipfs.io/ipfs/',
+        'https://cloudflare-ipfs.com/ipfs/',
+        'https://dweb.link/ipfs/'
+      ];
+
+      // Use primary gateway (Pinata) by default
+      return `${gateways[0]}${cid}`;
+    },
+
+    // Get alternative IPFS URLs for fallback
+    getAlternativeIpfsUrls(cid) {
+      if (!cid) return [];
+
+      return [
+        `https://${this.pinataGateway}/ipfs/${cid}`,
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://cloudflare-ipfs.com/ipfs/${cid}`,
+        `https://dweb.link/ipfs/${cid}`,
+        `https://gateway.ipfs.io/ipfs/${cid}`
+      ];
+    },
+    navigateToPageWithParam(page, paramName, paramValue) { if (page === 'farmerSell' && paramName === 'cid') { this.listingForm.cid = paramValue; } else if (page === 'farmerFunding' && paramName === 'cid') { this.fundingForm.cid = paramValue; } this.switchPage(page); },
+
+    // ---------------------------------------------------------------------------
+    // Farmer Feature Methods
+    // ---------------------------------------------------------------------------
+    async createListing() {
+        if (!this.listingForm.cid || !this.listingForm.minPrice || !this.listingForm.maxPrice) { alert("Please select a video and set a price range."); return; }
+        const vid = this.farmerVideos.find(v => v.cid === this.listingForm.cid);
+        if (!vid) { alert("Selected video not found."); return; }
+        const txHash = await this.simulateTransaction("Creating Listing");
+        const newListing = {
+            id: 'lst' + Date.now(), farmerWallet: this.currentUserIdentifier, crop: vid.crop, location: vid.location, cid: vid.cid,
+            minPrice: parseFloat(this.listingForm.minPrice), maxPrice: parseFloat(this.listingForm.maxPrice), status: 'active', createdAt: new Date().toISOString()
+        };
+        this.farmerListings.unshift(newListing);
+        this.addNotification(`Listing for "${newListing.crop}" created!`, 'success');
+        this.listingForm = { cid: '', minPrice: '', maxPrice: '', notifyBuyers: true };
+        this.saveDataToLocalStorage();
+    },
+    async createFundingRequest_V1() {
+        const form = this.fundingForm;
+        if (!form.cid || !form.title || !form.amount || !form.roi) { alert("Please fill all required fields."); return; }
+        const vid = this.farmerVideos.find(v => v.cid === form.cid);
+        if (!vid) { alert("Selected video not found."); return; }
+        await this.simulateTransaction("Creating Funding Request");
+        const newRequest = {
+            id: 'fr' + Date.now(), farmerWallet: this.currentUserIdentifier, title: form.title, crop: form.crop, amount: form.amount, cid: form.cid,
+            fundedAmount: 0, status: 'pending', createdAt: new Date().toISOString(), investors: []
+        };
+        this.farmerFundingRequests.unshift(newRequest);
+        this.addNotification(`Funding request "${newRequest.title}" is now live!`, 'success');
+        this.fundingForm = { title: '', crop: '', acres: null, amount: null, method: '', cid: '', description: '', timeline: null, roi: null, investorShare: null };
+        this.saveDataToLocalStorage();
+    },
+    // ---------------------------------------------------------------------------
+    // AgriStream & Profile Methods
+    // ---------------------------------------------------------------------------
+    formatPurpose(purpose) {
+      const purposeMap = {
+        'agristream': 'General',
+        'sell': 'For Sale',
+        'funding': 'Funding',
+        'climate_resilience': 'Climate',
+        'input_application': 'Input Use',
+        'protocol_step': 'Protocol',
+        'agri_waste': 'Waste',
+        'skill_demonstration': 'Skill'
+      };
+      return purposeMap[purpose] || 'Other';
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return 'Unknown';
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    },
+
+    likeVideo(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        if (video.liked) {
+          video.likes = Math.max(0, (video.likes || 0) - 1);
+          video.liked = false;
+        } else {
+          video.likes = (video.likes || 0) + 1;
+          video.liked = true;
+        }
+        this.saveDataToLocalStorage();
+      }
+    },
+
+    shareVideo(video) {
+      const shareText = `Check out this farming video: ${video.crop} from ${video.location}`;
+      const shareUrl = this.ipfsUrl(video.cid);
+
+      if (navigator.share) {
+        navigator.share({
+          title: `PestiVid - ${video.crop}`,
+          text: shareText,
+          url: shareUrl
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        // Fallback - copy to clipboard
+        const textToCopy = `${shareText}\n${shareUrl}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          this.addNotification('Video link copied to clipboard!', 'success');
+        }).catch(() => {
+          this.addNotification('Unable to copy link', 'error');
+        });
+      }
+    },
+
+    deleteVideo(cid) {
+      if (confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+        // Remove from farmer's videos
+        this.farmerVideos = this.farmerVideos.filter(v => v.cid !== cid);
+        // Remove from global stream
+        this.allFarmersVideos = this.allFarmersVideos.filter(v => v.cid !== cid);
+        // Remove from listings if exists
+        this.farmerListings = this.farmerListings.filter(l => l.cid !== cid);
+        // Remove from funding requests if exists
+        this.farmerFundingRequests = this.farmerFundingRequests.filter(r => r.cid !== cid);
+
+        this.addNotification('Video deleted successfully', 'success');
+        this.saveDataToLocalStorage();
+      }
+    },
+
+    getTotalVideoLikes() {
+      return this.allFarmersVideos
+        .filter(v => v.farmerWallet === this.currentUserIdentifier)
+        .reduce((total, video) => total + (video.likes || 0), 0);
+    },
+
+    getTotalVideosCount() {
+      return this.allFarmersVideos.length;
+    },
+
+    onVideoLoadStart(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        video.loading = true;
+        video.error = false;
+      }
+      console.log('🎥 Loading video from IPFS:', cid);
+    },
+
+    onVideoLoaded(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        video.loading = false;
+        video.error = false;
+      }
+      console.log('✅ Video loaded successfully:', cid);
+    },
+
+    onVideoCanPlay(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        video.loading = false;
+        video.error = false;
+      }
+      console.log('▶️ Video ready to play:', cid);
+    },
+
+    onVideoError(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        video.loading = false;
+        video.error = true;
+      }
+      console.error('❌ Video failed to load:', cid);
+      console.log('🔄 Try alternative IPFS gateways or check network connection');
+    },
+
+    retryVideoLoad(cid) {
+      const video = this.allFarmersVideos.find(v => v.cid === cid);
+      if (video) {
+        video.loading = true;
+        video.error = false;
+
+        // Force reload by updating the video element
+        this.$nextTick(() => {
+          const videoElements = document.querySelectorAll(`video[data-cid="${cid}"]`);
+          videoElements.forEach(el => {
+            el.load(); // Reload the video
+          });
+        });
+      }
+    },
+
+    getVideoType(url) {
+      if (url.includes('.webm')) return 'video/webm';
+      if (url.includes('.mp4')) return 'video/mp4';
+      if (url.includes('.ogg')) return 'video/ogg';
+      return 'video/webm'; // Default for recorded videos
+    },
+
+    scrollToAndHighlightAgriStreamVideo() {
+      if (this.targetAgriStreamVideoCid) {
+        this.highlightedAgriStreamVideoCid = this.targetAgriStreamVideoCid;
+        this.$nextTick(() => {
+          const element = document.querySelector(`[data-cid="${this.targetAgriStreamVideoCid}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setTimeout(() => {
+            this.highlightedAgriStreamVideoCid = null;
+            this.targetAgriStreamVideoCid = null;
+          }, 3000);
+        });
+      }
+    },
+
+
+
+    // Direct access method - bypasses authentication for Dashboard and Profile
+    directAccess(page) {
+      // If accessing protected pages, ensure user has basic info for display
+      if ((page === 'farmerPestiVid' || page === 'farmerProfile') && !this.currentUser) {
+        // Create minimal user for display purposes
+        this.currentUser = {
+          id: 'direct_user',
+          firstName: 'Guest',
+          lastName: 'User',
+          email: 'guest@pestivid.com',
+          area: 'Guest Area',
+          state: 'Guest State',
+          joinDate: new Date().toISOString()
+        };
+        this.isLoggedIn = true;
+      }
+
+      // Go directly to the page
+      this.current = page;
+      this.showMobileMenu = false;
+    },
+
+
+
+    // Load global data from all users
+    loadGlobalData() {
+      this.allFarmersVideos = [];
+
+      try {
+        // Get all users
+        const users = JSON.parse(localStorage.getItem('pestivid_users') || '[]');
+
+        // Load videos from all users
+        users.forEach(user => {
+          const userVideos = JSON.parse(localStorage.getItem(`pestivid_videos_${user.id}`) || '[]');
+
+          userVideos.forEach(video => {
+            this.allFarmersVideos.push({
+              ...video,
+              farmerName: `${user.firstName} ${user.lastName}`,
+              farmerWallet: user.id,
+              likes: video.likes || 0,
+              liked: false,
+              loading: false,
+              error: false
+            });
+          });
+        });
+
+        // Sort by upload timestamp (newest first)
+        this.allFarmersVideos.sort((a, b) =>
+          new Date(b.uploadTimestamp) - new Date(a.uploadTimestamp)
+        );
+
+        console.log(`📹 Loaded ${this.allFarmersVideos.length} videos from ${users.length} farmers`);
+
+      } catch (error) {
+        console.error('Error loading global data:', error);
+      }
+    },
+    
+    // ---------------------------------------------------------------------------
+    // UI & Utility Methods
+    // ---------------------------------------------------------------------------
+    addNotification(message, type = 'info') {
+        const newNotification = { id: 'notif_' + Date.now(), message, type, show: false };
+        this.notifications.push(newNotification);
+        if (this.recentNotifications.length < 3) { this.showNextToastNotification(); }
+    },
+    showNextToastNotification() {
+        if (this.recentNotifications.filter(n => n.show).length >= 3 || this.notifications.length === 0) return;
+        const notificationToShow = this.notifications.shift();
+        this.recentNotifications.push(notificationToShow);
+        this.$nextTick(() => { setTimeout(() => { notificationToShow.show = true; }, 50); });
+        setTimeout(() => this.dismissNotification(notificationToShow.id), 4500);
+    },
+    dismissNotification(id) {
+        const index = this.recentNotifications.findIndex(n => n.id === id);
+        if (index > -1) {
+            this.recentNotifications[index].show = false;
+            setTimeout(() => {
+                this.recentNotifications.splice(index, 1);
+                this.showNextToastNotification();
+            }, 400);
+        }
+    },
+    scrollToChatBottom() { const container = this.$refs.chatbotMessagesContainer; if (container) { container.scrollTop = container.scrollHeight; } },
+    renderMarkdown(text) { return window.marked ? window.marked.parse(text || '') : text; },
+
+    // ---------------------------------------------------------------------------
+    // Data Persistence
+    // ---------------------------------------------------------------------------
+    saveDataToLocalStorage() {
+        if (!this.currentUser) return;
+
+        const userId = this.currentUser.id;
+
+        // Save user-specific data
+        localStorage.setItem(`pestivid_videos_${userId}`, JSON.stringify(this.farmerVideos));
+        localStorage.setItem(`pestivid_listings_${userId}`, JSON.stringify(this.farmerListings));
+        localStorage.setItem(`pestivid_funding_${userId}`, JSON.stringify(this.farmerFundingRequests));
+        localStorage.setItem(`pestivid_crps_${userId}`, JSON.stringify(this.farmerAdoptedCRPs || []));
+        localStorage.setItem(`pestivid_inputs_${userId}`, JSON.stringify(this.farmerInputApplications || []));
+
+        // Update global videos
+        this.updateGlobalVideos();
+    },
+    // This method is now replaced by loadUserData() and loadGlobalData()
+    // Keeping for backward compatibility but it does nothing
+    loadDataFromLocalStorage() {
+        // Data loading is now handled by authentication system
+        console.log('Legacy loadDataFromLocalStorage called - using new auth system');
+    }
+  },
+  async mounted() {
+    console.log("🚀 PestiVid Agricultural Platform Mounted.");
+
+    // Critical API Key Check
+    if (this.pinataJwt === 'YOUR_PINATA_JWT_MUST_BE_REPLACED_HERE' || this.geminiApiKey === 'YOUR_GEMINI_API_KEY_HERE' || this.groqApiKey === 'YOUR_GROQ_API_KEY_REPLACE_ME') {
+        this.addNotification("CRITICAL: API keys are not set. Check console.", "error");
+        console.error("Please replace the placeholder API keys in the script tag for Pinata, Gemini, and Groq to enable all features.");
+    }
+
+    // Initialize countries data
+    this.initializeCountries();
+
+    // Check if user is already logged in
+    this.checkLoginStatus();
+
+    // Initialize blockchain connection
+    await this.initializeBlockchain();
+
+    // Load global data
+    this.loadGlobalData();
+  }
+});
+</script>
+</body>
+</html>
